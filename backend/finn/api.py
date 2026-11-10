@@ -37,6 +37,10 @@ def _cached(sym: str) -> dict | None:
 
 
 def _store(sym: str, d: dict) -> None:
+    # Only finished dossiers are cached; partial/failed/deferred ones are returned but retried next time.
+    st = (d.get("analysis") or {}).get("status")
+    if st not in ("complete", "unavailable", "numbers_only") and not (st == "seeded" and not llm.available()):
+        return
     tmp = DOSSIERS / f".{sym}.{threading.get_ident()}.tmp"
     tmp.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
     os.replace(tmp, DOSSIERS / f"{sym}.json")   # atomic: a concurrent reader never sees half a file
@@ -44,7 +48,8 @@ def _store(sym: str, d: dict) -> None:
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "llm": llm.available(), "models": vars(settings.models), "usage": llm.usage_report()}
+    return {"ok": True, "llm": llm.available(),
+            "models": {t: settings.models.chain(t) for t in ("bulk", "extract", "reason")}, "usage": llm.usage_report()}
 
 
 @app.get("/api/search")
@@ -63,6 +68,7 @@ def get_research(symbol: str):
     d = _cached(sym)
     if d is None:
         try:
+            llm.start_run()          # each on-demand dossier gets its own model budget and fresh breakers
             d = research.build(sym)
         except Exception as e:
             raise HTTPException(404, f"could not build {sym}: {e}")
@@ -86,6 +92,7 @@ async def stream_research(symbol: str):
         try:
             d = _cached(sym)
             if d is None:
+                llm.start_run()
                 d = research.build(sym, progress=lambda step, msg: emit("progress", {"step": step, "msg": msg}))
                 _store(sym, d)
             emit("done", d)

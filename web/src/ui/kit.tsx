@@ -69,7 +69,7 @@ export function Tie({ n }: { n: number }) {
 
 const VERDICT: Record<string, [string, string]> = {
   delivered: ["Delivered", "up"], partly: ["Partly", "warn"], missed: ["Missed", "down"],
-  pending: ["Pending", "muted"], "moved goalposts": ["Moved goalposts", "warn"],
+  pending: ["Pending", "muted"], "moved goalposts": ["Moved goalposts", "warn"], unknown: ["Unknown", "muted"],
 };
 export const Verdict = ({ v }: { v: string }) => { const [t, c] = VERDICT[v] ?? [v, "muted"]; return <span className={cls("verdict", c)}>{t}</span>; };
 

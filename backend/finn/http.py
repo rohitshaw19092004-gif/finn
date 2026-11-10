@@ -22,7 +22,7 @@ class PermanentError(RuntimeError):
     """4xx or wrong content: retrying won't help, and the response must not be cached."""
 _last_hit: dict[str, float] = {}
 MIN_GAP = {"www.screener.in": 1.2, "api.bseindia.com": 0.4, "www.bseindia.com": 0.4, "www.nseindia.com": 0.8,
-           "generativelanguage.googleapis.com": 4.5}   # free tier ~15 RPM
+           "nsearchives.nseindia.com": 0.5}   # Gemini pacing is per-model, in llm.py
 
 
 def client() -> httpx.Client:

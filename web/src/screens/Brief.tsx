@@ -127,10 +127,22 @@ export function Brief({ rules, setRules, openRules }: { rules: Rules; setRules: 
         {showDone && <ul className="glance">{cleared.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} doneLabel="Restore" />)}</ul>}
       </section>}
       <footer className="foot">
-        Filings: BSE · Prices: EOD · {snap.meta.classification.exchange + snap.meta.classification.rule} of {snap.meta.filings} filings classified without a model
+        Filings: {filingSources(snap.meta)} · Prices: EOD · {snap.meta.classification.exchange + snap.meta.classification.rule} of {snap.meta.filings} filings classified without a model
+        {snap.meta.run && <details className="health"><summary className={snap.meta.run.health === "ok" ? "up" : "warn-t"}>
+          · Refresh {snap.meta.run.health}{snap.meta.run.warnings.length ? ` (${snap.meta.run.warnings.length})` : ""}</summary>
+          {snap.meta.run.warnings.length > 0 && <ul>{snap.meta.run.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>}
+        </details>}
       </footer>
     </div>
   );
+}
+
+function filingSources(meta: ReturnType<typeof useSnap>["meta"]) {
+  const f = meta.run?.sources?.filings;
+  if (!f) return "BSE";
+  const c = new Map<string, number>();
+  Object.values(f).forEach((v) => c.set(v, (c.get(v) ?? 0) + 1));
+  return [...c.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => (c.size > 1 ? `${k} ×${n}` : k)).join(", ");
 }
 
 const coName = (snap: ReturnType<typeof useSnap>, sym: string) => snap.holdings.find((h) => h.symbol === sym)?.name?.replace(/ (Ltd|Limited|Industries|International|Technology|Company)\.?$/i, "") ?? sym;

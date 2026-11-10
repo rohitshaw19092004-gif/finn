@@ -41,14 +41,25 @@ export interface Holding {
 
 export interface Meta {
   generated_at: string; as_of: string | null; window_days: number; filings: number; stories: number;
-  classification: Record<string, number>; doc_pass: number; llm: Record<string, any>; models: Record<string, string>;
+  classification: Record<string, number>; doc_pass: number; llm: Record<string, any>; models: Record<string, string | string[]>;
   offline: boolean; sources: Record<string, string>;
+  run?: { health: "ok" | "degraded" | "failed"; warnings: string[]; sources: Record<string, Record<string, string>>;
+    documents: Record<string, number>; research: Record<string, { status: string; coverage?: string }> };
+}
+
+export type AnalysisStatus = "complete" | "partial" | "seeded" | "deferred" | "unavailable" | "failed" | "numbers_only";
+export interface Analysis {
+  status: AnalysisStatus; source: "live" | "seed" | "none"; as_of: string; coverage: string;
+  transcripts: { period: string; url: string; status: string; model?: string | null; verified?: number; rejected?: number; error?: string }[];
+  sections?: Record<string, { status: string; source: string; model?: string | null; error?: string }>;
+  verified_quotes?: number; rejected?: { statement?: string; quote?: string; reason: string }[]; notes: string[];
 }
 
 export interface Note { tone: "up" | "down" | "flat"; text: string }
 export interface Dossier {
   symbol: string; name: string;
   generated_by: { numbers: string; prose: string; models?: any };
+  analysis?: Analysis;
   sources: { transcripts: { period: string; url: string }[]; annual_reports?: { t: string; h: string }[]; statements: string };
   snapshot: { name: string; symbol: string; basis: string; sector: string[]; about: string | null; mcap_cr: number | null; price: number | null;
     pe: number | null; roce: number | null; roe: number | null; div_yield: number | null; book_value: number | null; high_low: string | null;
@@ -62,10 +73,12 @@ export interface Dossier {
   red_flags: Note[];
   quarters: { cols: string[]; rows: Record<string, (number | null)[]> } | null;
   business_mix: { what_it_does: string; segments: { name: string; share_pct: number | null; note?: string }[]; source?: string } | null;
-  guidance: { said_in: string; metric: string; statement: string; target?: string; horizon: string; quote: string; speaker?: string; kind: string }[];
-  promises: { promises: { said_in: string; metric: string; promise: string; quote?: string; outcome: string; evidence?: string; verdict: string }[];
+  guidance: { said_in: string; metric: string; statement: string; target?: string; horizon: string; quote: string; speaker?: string; kind: string;
+    quote_check?: "verbatim" | "near"; page?: number; model?: string }[];
+  promises: { promises: { said_in: string; metric: string; promise: string; quote?: string; outcome: string; evidence?: string; verdict: string;
+      quote_check?: string; evidence_check?: "traced" | "partly traced" | "untraced" | "no figures"; verdict_note?: string }[];
     narrative_vs_numbers: { theme: string; management_says: string; numbers_say: string; agree: boolean }[]; credibility: string } | null;
-  bull_bear: { bull: string[]; bear: string[]; what_would_change_my_mind?: string } | null;
+  bull_bear: { bull: string[]; bear: string[]; what_would_change_my_mind?: string; untraced?: string[] } | null;
 }
 
 export interface Rules {

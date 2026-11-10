@@ -29,19 +29,50 @@ HONORIFIC = r"(?:Mr\.?|Ms\.?|Mrs\.?|Dr\.?|Shri|Smt\.?)"
 NAME = re.compile(HONORIFIC + r"\s+([A-Z][A-Za-z.'’]*(?:\s+[A-Z][A-Za-z.'’]*){0,3})")
 
 
-def extract(doc_text: str, symbol: str) -> list[dict]:
-    """LLM path: only the profile/annexure part of the filing is sent (public text)."""
+def _squash(t: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (t or "").lower())
+
+
+def _in_text(name: str, text_sq: str) -> bool:
+    parts = [x for x in re.split(r"[\s.]+", name or "") if len(x) > 1]
+    return bool(parts) and all(_squash(x) in text_sq for x in parts)
+
+
+def extract(doc_text: str, symbol: str, status: dict | None = None) -> list[dict]:
+    """LLM path: only the profile/annexure part of the filing is sent (public text).
+
+    Model output is checked against the filing: a person whose name is not in the text is
+    dropped, and career rows naming an organisation that is not in the text are removed.
+    `status` (optional dict) receives what happened, for the run report.
+    """
     m = re.search(r"(brief profile|profile of|annexure)", doc_text, re.I)
     body = doc_text[max(0, (m.start() if m else 0) - 1500):][:12000]
-    out = llm.call("extract", system=(
+    res = llm.run("extract", task=f"{symbol} people", system=(
         "From this Indian stock-exchange filing, list each person whose appointment, resignation, retirement or "
         "cessation is disclosed. Use ONLY facts in the text. Dates as YYYY or YYYY-MM when stated; leave empty if not."),
         prompt=body, schema=SCHEMA)
-    if out and isinstance(out, dict):
-        people = out.get("people", [])
-        for p in people:
+    if status is not None:
+        status.update(status=res.status, model=res.model, error=res.error)
+    if res.ok and isinstance(res.data, dict):
+        sq = _squash(doc_text)
+        people, dropped = [], 0
+        for p in res.data.get("people", []) or []:
+            if not isinstance(p, dict) or not _in_text(p.get("name", ""), sq):
+                dropped += 1
+                continue
+            career = [r for r in p.get("career") or [] if isinstance(r, dict) and _squash(r.get("org"))
+                      and _squash(r.get("org")) in sq]
+            dropped_rows = len(p.get("career") or []) - len(career)
+            p["career"] = career
+            p["education"] = [e for e in p.get("education") or [] if isinstance(e, dict)
+                              and _squash(e.get("school")) and _squash(e.get("school")) in sq]
             p["symbol"] = symbol
-        return people
+            p["source"] = {"method": "llm", "model": res.model, "unverified_rows_removed": dropped_rows}
+            people.append(p)
+        if status is not None:
+            status["dropped_people"] = dropped
+        if people:
+            return people
     return fallback(doc_text, symbol)
 
 
@@ -57,5 +88,5 @@ def fallback(doc_text: str, symbol: str) -> list[dict]:
         role = re.search(r"(Managing Director|Chief Executive Officer|Chief Financial Officer|Chairman|"
                          r"Independent Director|Director|Company Secretary)", ctx)
         out.append({"name": name, "symbol": symbol, "event": {"role": role.group(1) if role else None},
-                    "career": [], "education": [], "enrichment": "pending"})
+                    "career": [], "education": [], "enrichment": "pending", "source": {"method": "rule"}})
     return out[:6]

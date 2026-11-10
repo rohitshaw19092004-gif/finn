@@ -8,3 +8,4 @@ __pycache__/
 # raw PDFs are large; their extracted text is kept for offline rebuilds
 data/raw/filings/*.pdf
 data/raw/transcripts/*.pdf
+.pytest_cache/

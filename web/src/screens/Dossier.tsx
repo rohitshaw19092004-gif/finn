@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { loadDossier, useSnap, apiBase } from "../data";
-import type { Dossier as D, Note } from "../types";
+import type { Analysis, Dossier as D, Note } from "../types";
 import { cls, crore, fq, pct, tone } from "../util";
 import { Bars, Spark, Verdict, Empty } from "../ui/kit";
 import { CallLine, StoryCard } from "./Brief";
@@ -64,6 +64,8 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
         {h && <><Spark data={h.close.slice(-250)} w={340} h={44} fluid /><div className="tiny dim">1 year · EOD {h.dates[h.dates.length - 1]}</div></>}
       </header>
 
+      <AnalysisBanner a={d.analysis} prose={d.generated_by.prose} />
+
       <nav className="d-tabs scroll">{SECTIONS.map(([k, l]) => <button key={k} className={cls(active === k && "on")} onClick={() => go(k)}>{l}</button>)}</nav>
 
       {stories.length > 0 && <div className="d-news">{stories.map((st) => <StoryCard key={st.id} st={st} lead={snap.byId.get(st.lead)!} />)}</div>}
@@ -86,6 +88,7 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
               <div className="p-promise">“{p.promise}”</div>
               <div className="p-outcome">{p.outcome}</div>
               {p.evidence && p.evidence !== "—" && <div className="tiny dim">{p.evidence}</div>}
+              <Checks quote={p.quote_check} evidence={p.evidence_check} note={p.verdict_note} />
             </li>))}</ul>
           <h3 className="sub">Narrative vs numbers</h3>
           <div className="nvn">{d.promises.narrative_vs_numbers.map((n, i) => (
@@ -94,8 +97,9 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
               <div className="nvn-cols"><div><span className="k">Management says</span>{n.management_says}</div><div><span className="k">Numbers say</span>{n.numbers_say}</div></div>
             </div>))}</div>
           {d.guidance.length > 0 && <details className="guidance"><summary>All {d.guidance.length} guidance statements, with quotes</summary>
-            <ul>{d.guidance.map((g, i) => <li key={i}><span className="small dim">{g.said_in} · {g.kind}</span><div><b>{g.statement}</b>{g.target ? <span className="dim"> — {g.target}, {g.horizon}</span> : null}</div><q>{g.quote}</q>{g.speaker && <span className="tiny dim"> — {g.speaker}</span>}</li>)}</ul></details>}
-        </> : <Empty>Reading management commentary needs the research engine (Gemini). The numbers below are computed from the filings and work without it.</Empty>}
+            <ul>{d.guidance.map((g, i) => <li key={i}><span className="small dim">{g.said_in} · {g.kind}</span><div><b>{g.statement}</b>{g.target ? <span className="dim"> — {g.target}, {g.horizon}</span> : null}</div><q>{g.quote}</q>{g.speaker && <span className="tiny dim"> — {g.speaker}</span>}
+              <span className="tiny dim">{g.quote_check === "verbatim" ? "✓ quote found verbatim in the transcript" : g.quote_check === "near" ? "≈ quote found near-verbatim in the transcript" : "quote not re-checked"}{g.page ? ` · p.${g.page}` : ""}</span></li>)}</ul></details>}
+        </> : <Empty>{missingWhy(d.analysis, "Reading management commentary")} The numbers below are computed from the filings and work without it.</Empty>}
       </section>
 
       <section ref={reg("traj")} className="d-sec">
@@ -134,10 +138,10 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       <section ref={reg("debate")} className="d-sec">
         <h2 className="section">Bull vs bear</h2>
         {d.bull_bear ? <div className="debate">
-          <div className="bull"><h3>Bull</h3><ul>{d.bull_bear.bull.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
-          <div className="bear"><h3>Bear</h3><ul>{d.bull_bear.bear.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
+          <div className="bull"><h3>Bull</h3><ul>{d.bull_bear.bull.map((x, i) => <li key={i}>{x}{d.bull_bear!.untraced?.includes(x) && <Untraced />}</li>)}</ul></div>
+          <div className="bear"><h3>Bear</h3><ul>{d.bull_bear.bear.map((x, i) => <li key={i}>{x}{d.bull_bear!.untraced?.includes(x) && <Untraced />}</li>)}</ul></div>
           {d.bull_bear.what_would_change_my_mind && <p className="small"><b>What would change the view:</b> {d.bull_bear.what_would_change_my_mind}</p>}
-        </div> : <Empty>Needs the research engine. Facts it would argue from: {[...d.trajectory.notes, ...d.cash.notes].slice(0, 3).map((n) => n.text).join("; ")}.</Empty>}
+        </div> : <Empty>{missingWhy(d.analysis, "The debate")} Facts it would argue from: {[...d.trajectory.notes, ...d.cash.notes].slice(0, 3).map((n) => n.text).join("; ")}.</Empty>}
       </section>
 
       <section ref={reg("people")} className="d-sec">
@@ -148,10 +152,67 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       <footer className="sources">
         <div><b>Sources (primary only).</b> Statements: <a className="link" href={d.sources.statements} target="_blank" rel="noreferrer">screener.in (from exchange filings)</a>.
           {d.sources.transcripts.length > 0 && <> Calls: {d.sources.transcripts.map((t, i) => <a key={i} className="link" href={t.url} target="_blank" rel="noreferrer">{t.period}</a>).reduce((a: any[], x, i) => i ? [...a, ", ", x] : [x], [])}.</>}</div>
-        <div className="tiny dim">Numbers: {d.generated_by.numbers}. Commentary: {d.generated_by.prose === "seeded" ? "build-time model run (same prompts & schemas as live)" : d.generated_by.prose}. No news, broker notes or model memory.</div>
+        <div className="tiny dim">Numbers: {d.generated_by.numbers}. Commentary: {proseLabel(d)}. No news, broker notes or model memory.</div>
       </footer>
     </div>
   );
+}
+
+const STATUS: Record<string, [string, string]> = {
+  complete: ["Analysed this refresh", "up"], partial: ["Partly analysed", "warn"], seeded: ["Build-time analysis", "warn"],
+  deferred: ["Analysis deferred", "warn"], failed: ["Analysis failed", "down"], unavailable: ["Numbers only", "muted"],
+  numbers_only: ["Numbers only", "muted"],
+};
+
+/** What the commentary on this page is, how fresh it is, and what is missing — before anyone reads it. */
+function AnalysisBanner({ a, prose }: { a?: Analysis; prose: string }) {
+  if (!a) return prose === "seeded" ? <div className="analysis warn"><span className="verdict warn">Build-time analysis</span>
+    <span className="small"> Commentary was generated before this refresh, from the calls listed under Sources.</span></div> : null;
+  const [label, tone] = STATUS[a.status] ?? [a.status, "muted"];
+  const bad = a.transcripts.filter((t) => !["ok", "cached", "not_attempted"].includes(t.status));
+  return <details className={cls("analysis", tone)}>
+    <summary><span className={cls("verdict", tone)}>{label}</span> <span className="small">{a.coverage}{a.verified_quotes ? ` · ${a.verified_quotes} quotes verified against transcripts` : ""}</span></summary>
+    {a.notes.map((n, i) => <p key={i} className="small">{n}</p>)}
+    <table className="mini"><thead><tr><th>Call</th><th>Status</th><th>Verified</th><th>Model</th></tr></thead><tbody>
+      {a.transcripts.map((t) => <tr key={t.period}><td><a className="link" href={t.url} target="_blank" rel="noreferrer">{t.period}</a></td>
+        <td className={cls(["ok", "cached"].includes(t.status) ? "up" : t.status === "not_attempted" ? "dim" : "warn-t")}>{t.status.replace(/_/g, " ")}</td>
+        <td className="num">{t.verified ?? "—"}{t.rejected ? <span className="dim"> (−{t.rejected})</span> : null}</td><td className="tiny dim">{t.model ?? "—"}</td></tr>)}
+    </tbody></table>
+    {bad.some((t) => t.error) && <div className="tiny dim">Errors: {bad.filter((t) => t.error).map((t) => `${t.period}: ${t.error}`).join(" · ")}</div>}
+    {a.rejected && a.rejected.length > 0 && <div className="tiny dim">Dropped by verification: {a.rejected.slice(0, 5).map((r) => `“${(r.quote ?? r.statement ?? "").slice(0, 60)}…” (${r.reason})`).join("; ")}</div>}
+    <div className="tiny dim">Checked {new Date(a.as_of).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</div>
+  </details>;
+}
+
+function Checks({ quote, evidence, note }: { quote?: string; evidence?: string; note?: string }) {
+  if (!quote && !evidence && !note) return null;
+  return <div className="tiny checks">
+    {quote && <span className={quote === "verbatim" || quote === "near" ? "up" : "warn-t"}>{quote === "verbatim" ? "✓ quote verbatim" : quote === "near" ? "≈ quote near-verbatim" : "quote not verified"}</span>}
+    {evidence && <span className={evidence === "traced" ? "up" : evidence === "untraced" ? "warn-t" : "dim"}>
+      {evidence === "traced" ? "✓ figures match reported numbers" : evidence === "partly traced" ? "some figures derived" : evidence === "untraced" ? "⚠ figures not found in reported numbers" : "evidence: later calls"}</span>}
+    {note && <span className="warn-t">{note}</span>}
+  </div>;
+}
+
+const Untraced = () => <span className="tiny warn-t" title="Cites a figure that is not in the facts given to the model"> ⚠ unverified figure</span>;
+
+function missingWhy(a: Analysis | undefined, what: string) {
+  if (!a) return `${what} needs the research engine (Gemini).`;
+  const why: Record<string, string> = {
+    deferred: "was deferred: this refresh ran out of model time before reaching this company. The next refresh picks it up.",
+    failed: "failed this refresh (model errors are listed above). The next refresh retries it.",
+    unavailable: "needs a model key, which this build doesn't have.", numbers_only: "had no readable transcripts to work from.",
+    partial: "was not produced this refresh (see the status above).",
+  };
+  return `${what} ${why[a.status] ?? "is unavailable."}`;
+}
+
+function proseLabel(d: D) {
+  const a = d.analysis;
+  if (!a) return d.generated_by.prose === "seeded" ? "build-time model run (same prompts & schemas as live)" : d.generated_by.prose;
+  if (a.source === "seed") return `build-time analysis, not regenerated in this refresh (${d.generated_by.models ?? "build-time run"})`;
+  if (a.source === "live") return `generated this refresh by ${(d.generated_by.models ?? []).join(", ") || "the model router"}; every quote checked against the transcript`;
+  return "none";
 }
 
 function Notes({ notes }: { notes: Note[] }) {

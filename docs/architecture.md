@@ -11,7 +11,7 @@ ever sees them.
 | Source | How it's fetched | Refresh | Stored as | Fallback |
 |---|---|---|---|---|
 | EOD price & volume | `yfinance` (`SYMBOL.NS`) | daily, 16:15 IST (after close) | `portfolio.json` (≈1 yr series) | screener.in chart endpoint |
-| Filings / announcements | BSE corporate-announcements JSON API (the one bseindia.com itself calls) | daily + on demand | `feed.json` (filings + stories) | NSE `corporate-announcements` API (needs a cookie; often blocks cloud IPs, so BSE is primary) |
+| Filings / announcements | BSE corporate-announcements JSON API (the one bseindia.com itself calls) | daily + on demand | `feed.json` (filings + stories) | NSE `corporate-announcements` API, PDFs from `nsearchives.nseindia.com`. BSE's API answers 403 to GitHub-hosted runners, so the scheduled job usually runs on NSE; NSE rows are matched to their BSE twins (same company, ±20 min) to reuse BSE-keyed extracted text and profiles |
 | Fundamentals | screener.in company page → standardised P&L, balance sheet, cash flow, ratios, shareholding + document links | 12 h cache | `research/<SYM>.json` | standalone page if no consolidated |
 | Concall transcripts / annual reports | PDFs on BSE (links from screener) → `pypdf` text | immutable → cached forever | `data/cache/text/` | — (scanned PDFs: OCR is a to-do) |
 | People in filings | the filing's own LODR "brief profile" annexure → `extract` model | per filing | `people.json` | licensed profile provider (see §2) |
@@ -67,20 +67,34 @@ boosts/mutes and a network-relevance nudge on-device.
 
 ## 3. LLMs and agents
 
-| Step | Tier / default model | Why this model | Calls per day (18 stocks) |
+| Step | Tier → fallback | Why this model | Calls per day (21 stocks) |
 |---|---|---|---|
-| Residual classification (~5% of filings) | `bulk` — Gemini Flash-Lite | cheap, fast; 40 filings per call | 1 |
+| Residual classification (~5% of filings) | `bulk` — Flash-Lite | cheap, fast; 40 filings per call | 1 |
 | One-liners for stories worth a glance | `bulk` — Flash-Lite | short prose, batched 25/call | 1–2 |
-| People from filing annexures | `extract` — Gemini Flash | structured JSON (career rows) | 0–5 |
-| Results table from the PDF (cross-check) | `extract` — Flash | table reading; verified against screener ±2% | 0–5 |
-| Guidance from transcripts | `extract` — Flash | per transcript, **pre-filtered to management answers with forward-looking cues (~15% of the text)** | 5 per new dossier, cached forever |
-| Promise vs delivered, bull/bear | `reason` — Flash (Pro on a paid key) | judgment, but over *already-extracted* facts + reported numbers, never raw transcripts | 2 per new dossier |
+| People from filing annexures | `extract` — Flash-Lite | structured JSON; names/orgs not in the filing are dropped | 0–5 |
+| Guidance from transcripts | `extract` — Flash-Lite | per transcript, **pre-filtered to management answers with forward-looking cues (~15% of the text)**; every quote verified against the transcript | 5 per new dossier, cached forever |
+| Business mix, bull/bear | `extract` — Flash-Lite | over the deterministic facts only; bullets citing figures not in the facts are flagged | 2 per new dossier |
+| Promise vs delivered | `reason` — Flash → Flash-Lite | judgment over *verified* guidance + reported numbers, never raw transcripts; verdicts without figures become "unknown" | 1 per new dossier |
+
+Why this routing (learned from the first live refresh, 10 Nov 2026): on the free tier, Flash allows ≈20
+requests per **day** and was returning 503 (overloaded); a first refresh needs ~180 calls. So the volume
+runs on Flash-Lite (≈500/day), Flash is capped at 15 requests per run, and every tier falls back to Flash-Lite.
+Gemini 3 defaults to deep thinking and is documented to loop at low temperatures, so FINN sends
+`thinkingLevel: low`, leaves temperature at the model default, and caps output tokens.
+
+Reliability rules (`backend/finn/llm.py`): ≤ 1 + 2 attempts per model with a 90 s timeout and jittered backoff;
+per-day 429 / 404 / 403 retire a model for the run; per-minute 429 honours `retryDelay`; 3 consecutive
+failures open a 10-minute breaker; a 50-minute run budget after which remaining work is **deferred**
+(labelled in the app, picked up next run from the cache). Every call returns ok / cached / failed /
+deferred / unavailable — nothing incomplete is presented as analysed.
 
 - Everything arithmetic (QoQ/YoY, margins, CAGRs, D/E, working-capital days, cash conversion, alerts) is
   deterministic code — models only read prose.
-- Every call is cached by `sha256(model, prompt, schema)`; filings and transcripts never change, so a
-  re-run costs ~0 tokens. A usage ledger is written to `meta.json` each run.
-- No key → the pipeline still runs end to end with deterministic fallbacks (cleaned headlines, numbers-only dossiers).
+- Every successful call is cached by `sha256(prompt, schema)`; filings and transcripts never change, so a
+  re-run costs ~0 tokens. Failures are never cached. A usage ledger and run report go to `meta.json` and
+  the Actions step summary each run.
+- No key → the pipeline still runs end to end with deterministic fallbacks (cleaned headlines, numbers-only
+  dossiers); dossiers with a build-time seed show it, labelled "build-time analysis" with its generator.
 - **Agentic behaviour** is deliberately narrow: the Pull pipeline plans which documents to read
   (latest 5 transcripts, filtered), calls tools (fetchers, parsers), and streams its progress. It never acts
   on the investor's behalf (no messages sent, nothing posted); drafting an outreach note is a suggestion the user sends.
@@ -94,7 +108,7 @@ boosts/mutes and a network-relevance nudge on-device.
 | Daily pipeline | GitHub Actions cron (16:15 IST, Mon–Fri) | free, has open internet, caches `data/cache` between runs; commits the snapshot |
 | Mobile web app (PWA) | GitHub Pages (static) | free, instant on a phone, works even if the API sleeps |
 | Live research API (any NSE symbol) | Render free web service (Docker) | runs Python (PDF parsing, yfinance), SSE progress; cold start ~30 s, so the app ships pre-built dossiers |
-| Models | Google AI Studio (Gemini) free tier | Flash-Lite + Flash cover everything; set `FINN_MODEL_REASON` to a Pro model on a paid key |
+| Models | Google AI Studio (Gemini) free tier | Flash-Lite for volume, Flash (capped) for judgment, automatic fallback; on a paid key set `FINN_MODEL_EXTRACT=gemini-flash-latest` / `FINN_MODEL_REASON` to a Pro model |
 | Private network | the investor's device | privacy by construction |
 
 At scale: Postgres for filings/stories, object storage for PDFs, a queue (Cloud Tasks) for per-filing

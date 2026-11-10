@@ -213,3 +213,16 @@ q { font: italic 14px/1.4 var(--serif); color: var(--ink-2); }
 .intro p { margin: 8px 0; }
 .mv-sym { font-weight: 700; font-size: 13px; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mv-pct { font-size: 20px; font-weight: 600; }
+
+/* dossier analysis status (what the commentary is, how fresh, what's missing) */
+.analysis { margin: 12px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--rule); }
+.analysis summary { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.analysis summary::-webkit-details-marker { display: none; }
+.analysis.warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--rule)); }
+.analysis.down { border-color: color-mix(in srgb, var(--down) 45%, var(--rule)); }
+.analysis p { margin: 8px 0 4px; }
+.analysis .mini { margin: 8px 0; }
+.checks { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.health { display: inline-block; margin-left: 6px; }
+.health summary { cursor: pointer; display: inline; }
+.health ul { text-align: left; margin: 8px 0; padding-left: 18px; }

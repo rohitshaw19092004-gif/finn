@@ -22,11 +22,19 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--port", type=int, default=8000)
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)      # one line per request drowned the real problems
 
     if a.cmd == "refresh":
         from .snapshot import build
         meta = build()
-        print(json.dumps(meta, indent=1))
+        run = meta["run"]
+        print(json.dumps({k: meta[k] for k in ("generated_at", "as_of", "filings", "stories", "models")}, indent=1))
+        print(json.dumps({"health": run["health"], "warnings": run["warnings"], "research": run["research"],
+                          "documents": run["documents"], "llm_totals": meta["llm"]["totals"],
+                          "llm_models": meta["llm"]["models"]}, indent=1, ensure_ascii=False))
+        if run["health"] == "failed":
+            print("Refresh FAILED: core data sources are missing; the snapshot will not be committed.", file=sys.stderr)
+            return 1
     elif a.cmd == "research":
         from .intel.research import build
         d = build(a.symbol, progress=lambda step, msg: print(f"· {msg}", file=sys.stderr))

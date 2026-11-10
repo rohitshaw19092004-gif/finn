@@ -1,5 +1,11 @@
 # Daily after NSE close (16:15 IST = 10:45 UTC, Mon–Fri): pull EOD prices, filings and
 # fundamentals, classify/score/enrich, write the snapshot, commit it. pages.yml then redeploys.
+#
+# Failure policy (see backend/finn/snapshot.py: finish_report):
+#   * tests fail                       -> job fails, nothing is refreshed or committed
+#   * core data missing (health=failed) -> job fails, snapshot NOT committed (the live site keeps the last good one)
+#   * model calls failed / deferred     -> job succeeds with ::warning:: annotations; the snapshot is committed
+#                                          with every incomplete dossier labelled as such in the app
 name: refresh-snapshot
 on:
   schedule:
@@ -7,10 +13,13 @@ on:
   workflow_dispatch: {}
 permissions:
   contents: write
+concurrency:
+  group: refresh-snapshot          # never two refreshes at once (they would race on the commit)
+  cancel-in-progress: false
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,6 +28,9 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r backend/requirements.txt
+      - name: Tests (no network, fake model)
+        working-directory: backend
+        run: python -m pytest -q tests
       - name: Restore LLM + document cache (filings never change; re-runs cost ~0 tokens)
         uses: actions/cache/restore@v4
         with:
@@ -27,8 +39,15 @@ jobs:
           restore-keys: finn-cache-
       - name: Refresh
         working-directory: backend
+        timeout-minutes: 75
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Model work is capped so the snapshot is always written and committed; unfinished dossiers are
+          # labelled "deferred" and picked up by the next run from the cache. Override in repo Variables if needed.
+          FINN_LLM_BUDGET_MIN: ${{ vars.FINN_LLM_BUDGET_MIN || '50' }}
+          FINN_LLM_TIMEOUT: ${{ vars.FINN_LLM_TIMEOUT || '90' }}
+          FINN_LLM_RETRIES: ${{ vars.FINN_LLM_RETRIES || '2' }}
+          FINN_FLASH_CAP: ${{ vars.FINN_FLASH_CAP || '15' }}
         run: python -m finn refresh
       - name: Save cache (even if the job partly failed)
         if: always()
@@ -42,6 +61,7 @@ jobs:
           git config user.email "finn-bot@users.noreply.github.com"
           git add web/public/data
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "snapshot $(date -u +%F)"
+          HEALTH=$(python -c "import json;print(json.load(open('web/public/data/meta.json'))['run']['health'])")
+          git commit -m "snapshot $(date -u +%F) (health: ${HEALTH})"
           git pull --rebase
           git push

@@ -70,6 +70,65 @@ SUBCAT = {
     "insider trading / sast": ("insider_trading", "insider"),
 }
 
+# NSE's `desc` labels -> the BSE sub-category vocabulary above. (key, trust):
+#   trust=True  -> NSE's label is specific; use it like a BSE sub-category.
+#   trust=False -> label is coarse ("Updates", "Shareholders meeting"); keyword rules decide, label is the fallback.
+NSE_DESC = {
+    "financial result updates": ("financial results", True),
+    "outcome of board meeting": ("outcome of board meeting", True),
+    "board meeting intimation": ("board meeting", True),
+    "investor presentation": ("investor presentation", True),
+    "transcript": ("earnings call transcript", True),
+    "credit rating": ("credit rating", True),
+    "credit rating- others": ("credit rating", True),
+    "dividend": ("dividend", True),
+    "date of payment of dividend": ("date of payment of dividend", True),
+    "record date": ("record date", True),
+    "copy of newspaper publication": ("newspaper publication", True),
+    "trading window": ("trading window", True),
+    "trading window-xbrl": ("trading window", True),
+    "esop/esos/esps": ("allotment of esop / esps", True),
+    "allotment of esop / esps": ("allotment of esop / esps", True),
+    "loss of share certificates": ("certificate under reg. 74 (5) of sebi (dp) regulations, 2018", True),
+    "certificate under sebi (depositories and participants) regulations, 2018": (
+        "certificate under reg. 74 (5) of sebi (dp) regulations, 2018", True),
+    "monitoring agency report": ("monitoring agency report", True),
+    "statement of deviation(s) or variation(s) under reg. 32": ("reg. 32 (1), (3) - statement of deviation & variation", True),
+    "bagging/receiving of orders/contracts": ("award of order / receipt of order", True),
+    "change in auditors": ("appointment of statutory auditor/s", True),
+    "postal ballot": ("postal ballot", True),
+    "change in management": ("change in management", False),
+    "change in director(s)": ("change in directorate", False),
+    "appointment": ("change in management", False),
+    "resignation": ("change in management", False),
+    "cessation": ("change in management", False),
+    "analysts/institutional investor meet/con. call updates": ("analyst / investor meet", False),
+    "acquisition": ("acquisition", False),
+    "scheme of arrangement": ("scheme of arrangement", False),
+    "allotment of securities": ("allotment of equity shares", False),
+    "press release": ("press release / media release", False),
+    "clarification - financial results": ("clarification", False),
+    "clarification": ("clarification", False),
+    "disclosure under sebi takeover regulations": ("insider trading / sast", False),
+    "action(s) initiated or orders passed": ("", False),
+    "shareholders meeting": ("", False),
+    "notice of shareholders meetings-xbrl": ("agm", False),
+    "updates": ("", False),
+    "general updates": ("", False),
+}
+
+
+def _exchange_label(f: dict) -> tuple[str, bool]:
+    """(BSE-style sub-category, rules_first) for any exchange."""
+    sub = (f.get("exch_subcategory") or "").strip().lower()
+    if f.get("exchange") == "NSE":
+        key, trust = NSE_DESC.get(sub, ("", False))
+        return key, not trust
+    generic = sub in ("", "general", "others", "change in management", "board meeting", "outcome of board meeting",
+                      "clarification")
+    return sub, generic
+
+
 _ROLE = (r"(managing director|md ?& ?ceo|chief executive|\bceo\b|\bcfo\b|chief financial|chairman|chairperson|"
          r"whole[- ]time director|key managerial|\bkmp\b|senior management|director|general counsel|company secretary)")
 _ACT = r"(appoint|resign|cessation|retire|superannuat|vacat|assum\w* (charge|office)|step(s|ped)? down|re-?appoint|change in)"
@@ -136,7 +195,7 @@ def _text(f: dict) -> str:
 
 def classify_rule(f: dict) -> tuple[str, str, str] | None:
     """Return (category, kind, method) or None if rules can't decide."""
-    sub = (f.get("exch_subcategory") or "").strip().lower()
+    sub, generic = _exchange_label(f)
     txt = _text(f)
     # Board meetings: results first (the most common reason), otherwise read the agenda.
     if sub in ("board meeting", "outcome of board meeting") and re.search(r"financial results|unaudited|audited", txt):
@@ -145,8 +204,6 @@ def classify_rule(f: dict) -> tuple[str, str, str] | None:
     if sub == "press release / media release" and re.search(r"financial results|results for the|performance .{0,30}quarter", txt):
         return "results", "press", "exchange"
     # Rules first when the exchange label is generic or known to be overloaded.
-    generic = sub in ("", "general", "others", "change in management", "board meeting", "outcome of board meeting",
-                      "clarification")
     if generic:
         for pat, cat, kind in RULES:
             if re.search(pat, txt, re.I):
