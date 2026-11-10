@@ -1,0 +1,242 @@
+{
+ "_generator": "Build-time run: Claude (Anthropic) read the pre-filtered management excerpts (finn/intel/transcripts.py:prefilter) of the 5 calls listed in sources, using the same prompts and JSON schemas the pipeline sends to Gemini. `finn refresh` with GEMINI_API_KEY regenerates this.",
+ "guidance": [
+  {
+   "said_in": "Nov 2025",
+   "metric": "revenue growth",
+   "statement": "Expects at least sequential revenue growth in Q3 and Q4 FY26; won't quantify",
+   "target": "sequential growth",
+   "horizon": "Q3–Q4 FY26",
+   "quote": "quarter 3, quarter 4, we expect a good growth, I mean at least a sequential growth, but we do not want to quantify it",
+   "speaker": "Siddharth Sikchi",
+   "kind": "directional"
+  },
+  {
+   "said_in": "Nov 2025",
+   "metric": "capacity",
+   "statement": "Performance Chemical 1 (10,000 t) can do ~₹300 Cr revenue at full scale at current prices",
+   "target": "~₹300 Cr",
+   "horizon": "full scale",
+   "quote": "on full-scale capacity, we envisage a revenue of about INR300 odd crores with the current prices",
+   "speaker": "Siddharth Sikchi",
+   "kind": "explicit"
+  },
+  {
+   "said_in": "Feb 2026",
+   "metric": "capacity",
+   "statement": "PC1 revenue potential cut to ~₹260 Cr at ~80% utilisation; PC2 to start May–June 2026",
+   "target": "₹260 Cr; PC2 May–Jun 2026",
+   "horizon": "FY27",
+   "quote": "around 80% capacity utilization, we are looking at a revenue of INR260 crores, which was earlier INR320-odd crores",
+   "speaker": "Siddharth Sikchi",
+   "kind": "explicit"
+  },
+  {
+   "said_in": "Feb 2026",
+   "metric": "other",
+   "statement": "Domestic:export mix 70:30 today; exports to ramp quickly from Q4 and through FY27",
+   "target": "export ramp",
+   "horizon": "Q4 FY26–FY27",
+   "quote": "as we move in quarter 4 and then subsequently in '27, this mix will start changing, and we expect the exports to quickly start ramping up",
+   "speaker": "Siddharth Sikchi",
+   "kind": "directional"
+  },
+  {
+   "said_in": "May 2026",
+   "metric": "capacity",
+   "statement": "Hydroquinone plant at 10–15% utilisation; ramp-up every quarter",
+   "target": "quarterly ramp",
+   "horizon": "FY27",
+   "quote": "it is 10%, 15%-odd right now. And we want to ramp up. Every quarter-on-quarter, you will see the ramp-up happening",
+   "speaker": "Siddharth Sikchi",
+   "kind": "directional"
+  },
+  {
+   "said_in": "Aug 2026",
+   "metric": "revenue growth",
+   "statement": "HALS revenue target of ₹250–300 Cr for FY27",
+   "target": "₹250–300 Cr",
+   "horizon": "FY27",
+   "quote": "in terms of revenue this year, the target is between INR250 crores to INR300 crores",
+   "speaker": "Siddharth Sikchi",
+   "kind": "explicit"
+  },
+  {
+   "said_in": "Aug 2026",
+   "metric": "EBITDA margin",
+   "statement": "EBITDA margins will keep improving as higher-grade HALS grows",
+   "target": "improving",
+   "horizon": "coming quarters",
+   "quote": "we are very confident that the EBITDA margins will keep improving",
+   "speaker": "Siddharth Sikchi",
+   "kind": "directional"
+  },
+  {
+   "said_in": "Aug 2026",
+   "metric": "capacity",
+   "statement": "Performance Chemical 2 plant to start in Nov–Dec 2026; major revenue from Q1 FY28",
+   "target": "start Nov–Dec 2026",
+   "horizon": "Q3 FY27",
+   "quote": "Performance Chemical 2, the plant we expect to start in quarter 3, which would be November, December sorts",
+   "speaker": "Siddharth Sikchi",
+   "kind": "explicit"
+  },
+  {
+   "said_in": "Nov 2026",
+   "metric": "capacity",
+   "statement": "Hydroquinone/catechol utilisation to rise from 30–35% to 55–60% in the next few quarters",
+   "target": "55–60% utilisation",
+   "horizon": "next few quarters",
+   "quote": "the coming few quarters, we should touch between 55% to 60% capacity utilization",
+   "speaker": "Siddharth Sikchi",
+   "kind": "explicit"
+  },
+  {
+   "said_in": "Nov 2026",
+   "metric": "capacity",
+   "statement": "New 1,000 t advanced-HALS line by Apr–May 2027; HALS capacity ~11,500 → ~12,500 t",
+   "target": "+1,000 t",
+   "horizon": "Apr–May 2027",
+   "quote": "we have to put up a 1,000 ton line, and we will do so and the plant should start by April or May",
+   "speaker": "Siddharth Sikchi",
+   "kind": "explicit"
+  },
+  {
+   "said_in": "Nov 2026",
+   "metric": "EBITDA margin",
+   "statement": "Margins to improve quarter-on-quarter with mix shift and backward integration",
+   "target": "QoQ improvement",
+   "horizon": "coming quarters",
+   "quote": "the margins will also keep improving quarter-on-quarter",
+   "speaker": "Siddharth Sikchi",
+   "kind": "directional"
+  }
+ ],
+ "promises": {
+  "promises": [
+   {
+    "said_in": "Aug 2026",
+    "metric": "EBITDA margin",
+    "promise": "Margins will keep improving",
+    "quote": "we are very confident that the EBITDA margins will keep improving",
+    "outcome": "Next quarter's operating margin fell to 31% from 36%; EBITDA slipped to ₹92 Cr from ₹96 Cr",
+    "evidence": "OPM Jun-26 36% → Sep-26 31%",
+    "verdict": "missed"
+   },
+   {
+    "said_in": "Nov 2025",
+    "metric": "revenue growth",
+    "promise": "At least sequential growth in Q3 and Q4 FY26",
+    "quote": "we expect a good growth, I mean at least a sequential growth",
+    "outcome": "Q3 fell 10% QoQ; Q4 rebounded 13% QoQ",
+    "evidence": "Sales ₹245 Cr (Sep-25) → ₹220 Cr (Dec-25) → ₹249 Cr (Mar-26)",
+    "verdict": "partly"
+   },
+   {
+    "said_in": "Nov 2025",
+    "metric": "capacity",
+    "promise": "PC1 can do ~₹300 Cr at full scale",
+    "quote": "we envisage a revenue of about INR300 odd crores",
+    "outcome": "Three months later the potential was restated to ~₹260 Cr at 80% utilisation (from '₹320-odd Cr')",
+    "evidence": "Feb 2026 call",
+    "verdict": "moved goalposts"
+   },
+   {
+    "said_in": "Feb 2026",
+    "metric": "capacity",
+    "promise": "PC2 plant to begin May–June 2026",
+    "quote": "the facility will only begin by May, June",
+    "outcome": "Pushed to Nov–Dec 2026 in the Aug call; the Nov call doesn't confirm a start",
+    "evidence": "Aug 2026 & Nov 2026 calls",
+    "verdict": "moved goalposts"
+   },
+   {
+    "said_in": "Feb 2026",
+    "metric": "other",
+    "promise": "Exports to ramp from Q4 FY26",
+    "quote": "we expect the exports to quickly start ramping up",
+    "outcome": "Exports reached 73% of standalone sales in Q2 FY27 (64% the quarter before)",
+    "evidence": "Nov 2026 call",
+    "verdict": "delivered"
+   },
+   {
+    "said_in": "May 2026",
+    "metric": "capacity",
+    "promise": "Hydroquinone utilisation to ramp every quarter from 10–15%",
+    "quote": "Every quarter-on-quarter, you will see the ramp-up happening",
+    "outcome": "30–35% utilisation by the Nov 2026 call",
+    "evidence": "Nov 2026 call",
+    "verdict": "delivered"
+   },
+   {
+    "said_in": "Aug 2026",
+    "metric": "revenue growth",
+    "promise": "HALS revenue ₹250–300 Cr in FY27",
+    "quote": "the target is between INR250 crores to INR300 crores",
+    "outcome": "Horizon not over; consolidated sales up 11% and 22% YoY in the two FY27 quarters so far",
+    "evidence": "Sales ₹268 Cr (Jun-26), ₹299 Cr (Sep-26)",
+    "verdict": "pending"
+   }
+  ],
+  "narrative_vs_numbers": [
+   {
+    "theme": "Margins",
+    "management_says": "Margins will keep improving quarter-on-quarter (said in Aug and again in Nov 2026)",
+    "numbers_say": "Quarterly OPM 41% → 36% → 33% → 38% → 36% → 31% over the last six quarters; annual OPM 42% (FY24) → 34% (TTM)",
+    "agree": false
+   },
+   {
+    "theme": "Growth",
+    "management_says": "Volumes recovering, exports ramping",
+    "numbers_say": "Revenue +11% and +22% YoY in the last two quarters after two quarters of decline",
+    "agree": true
+   },
+   {
+    "theme": "Operating leverage",
+    "management_says": "Ramp-ups and backward integration will lift profitability",
+    "numbers_say": "Sep-26 PAT ₹56 Cr vs ₹55 Cr a year ago — revenue up 22%, profit flat",
+    "agree": false
+   }
+  ],
+  "credibility": "Operational milestones (exports, hydroquinone ramp) do land, but plant dates slip by quarters and the margin-improvement promise has not shown up in the reported numbers yet."
+ },
+ "business_mix": {
+  "what_it_does": "Makes specialty chemicals through in-house catalytic processes — performance chemicals, pharma & agro intermediates and FMCG ingredients (e.g. BHA, BHT, TBHQ, avobenzone, hydroquinone/catechol) — plus HALS polymer stabilisers through subsidiary Clean Fino-Chem.",
+  "segments": [
+   {
+    "name": "Performance chemicals",
+    "share_pct": 72,
+    "note": "standalone revenue, Q4 FY26"
+   },
+   {
+    "name": "Pharma & agro intermediates",
+    "share_pct": 19,
+    "note": "standalone revenue, Q4 FY26"
+   },
+   {
+    "name": "FMCG ingredients",
+    "share_pct": 9,
+    "note": "standalone revenue, Q4 FY26"
+   },
+   {
+    "name": "HALS (subsidiary)",
+    "share_pct": null,
+    "note": "FY27 target ₹250–300 Cr"
+   }
+  ],
+  "source": "CFO, Q4 FY26 earnings call (May 2026); Q1 FY27 call (Aug 2026)"
+ },
+ "bull_bear": {
+  "bull": [
+   "Back to growth: Sep-26 quarter sales ₹299 Cr, +22% YoY, after −9% and −5% in Dec-25 and Mar-26.",
+   "Net-cash balance sheet: borrowings ₹2 Cr vs investments ₹397 Cr; management calls current capex 'largely funded'.",
+   "Operating leverage queued: hydroquinone utilisation 30–35% targeted at 55–60%; HALS capacity rising to ~12,500 t."
+  ],
+  "bear": [
+   "Margins sliding: quarterly OPM 31% in Sep-26 vs 41% in Jun-25; annual OPM 42% (FY24) → 34% (TTM).",
+   "Profit not following sales: Sep-26 PAT ₹56 Cr vs ₹55 Cr a year ago on +22% revenue.",
+   "Execution slippage: PC2 start moved from May–Jun to Nov–Dec 2026; PC1 revenue potential cut to ₹260 Cr from ₹320 Cr."
+  ],
+  "what_would_change_my_mind": "Two consecutive quarters of OPM ≥ 36% with advanced-grade HALS above 40% of the mix."
+ }
+}

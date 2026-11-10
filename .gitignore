@@ -1,0 +1,10 @@
+node_modules/
+web/dist/
+data/cache/
+__pycache__/
+*.pyc
+.env
+.venv/
+# raw PDFs are large; their extracted text is kept for offline rebuilds
+data/raw/filings/*.pdf
+data/raw/transcripts/*.pdf

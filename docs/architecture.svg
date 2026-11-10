@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" font-family="-apple-system, Segoe UI, Inter, sans-serif" font-size="13">
+  <rect width="960" height="560" fill="#f6f4ef"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4a4e57"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3a5bd9"/></marker>
+  </defs>
+  <text x="24" y="34" font-size="20" font-weight="700" fill="#15171c">FINN — public intelligence in the cloud, private network on the device</text>
+
+  <!-- sources -->
+  <g>
+    <text x="24" y="72" font-size="11" fill="#4a4e57" letter-spacing="1">PUBLIC SOURCES</text>
+    <rect x="24" y="82" width="170" height="44" rx="8" fill="#fff" stroke="#d8d2c4"/><text x="36" y="102" font-weight="600">Yahoo / screener</text><text x="36" y="118" fill="#4a4e57" font-size="11.5">EOD price &amp; volume</text>
+    <rect x="24" y="134" width="170" height="44" rx="8" fill="#fff" stroke="#d8d2c4"/><text x="36" y="154" font-weight="600">BSE (→ NSE)</text><text x="36" y="170" fill="#4a4e57" font-size="11.5">filings + PDFs</text>
+    <rect x="24" y="186" width="170" height="44" rx="8" fill="#fff" stroke="#d8d2c4"/><text x="36" y="206" font-weight="600">screener.in</text><text x="36" y="222" fill="#4a4e57" font-size="11.5">statements, AR, concalls</text>
+    <rect x="24" y="238" width="170" height="44" rx="8" fill="#fff" stroke="#d8d2c4"/><text x="36" y="258" font-weight="600">LODR annexures</text><text x="36" y="274" fill="#4a4e57" font-size="11.5">profiles of appointees</text>
+  </g>
+
+  <!-- daily pipeline -->
+  <rect x="236" y="62" width="330" height="236" rx="12" fill="#fffdf8" stroke="#b5652b" stroke-width="1.5"/>
+  <text x="252" y="86" font-weight="700" fill="#b5652b">Daily pipeline · GitHub Actions 16:15 IST</text>
+  <text x="252" y="110">1  classify: exchange label → rules → PDF p.1 → LLM</text>
+  <text x="252" y="132">2  score: surprise, size, role, price reaction</text>
+  <text x="252" y="154">3  cluster filings into stories</text>
+  <text x="252" y="176">4  enrich: results card · people from annexures</text>
+  <text x="252" y="198">5  dossiers: numbers (code) + guidance (LLM)</text>
+  <text x="252" y="220">6  write snapshot JSON → commit</text>
+  <rect x="252" y="236" width="298" height="46" rx="8" fill="#f6efe6"/>
+  <text x="264" y="256" font-size="12" fill="#4a4e57">cache: sha256(model, prompt, schema) · docs forever</text>
+  <text x="264" y="273" font-size="12" fill="#4a4e57">no key → deterministic fallbacks, still runs</text>
+
+  <!-- LLM tiers -->
+  <rect x="236" y="320" width="330" height="128" rx="12" fill="#fff" stroke="#d8d2c4"/>
+  <text x="252" y="344" font-weight="700">Model routing (Gemini, free tier)</text>
+  <text x="252" y="368">bulk · Flash-Lite — residual classify, one-liners</text>
+  <text x="252" y="390">extract · Flash — people, results PDF, guidance</text>
+  <text x="252" y="412">reason · Flash/Pro — promise vs delivered, bull/bear</text>
+  <text x="252" y="434" font-size="11.5" fill="#b8402a">only public documents are ever sent to a model</text>
+
+  <!-- API -->
+  <rect x="236" y="470" width="330" height="62" rx="12" fill="#fff" stroke="#d8d2c4"/>
+  <text x="252" y="494" font-weight="700">Research API · Render (FastAPI, Docker)</text>
+  <text x="252" y="514" font-size="12" fill="#4a4e57">Pull on any NSE symbol · SSE progress · no personal data</text>
+
+  <!-- static snapshot -->
+  <rect x="608" y="62" width="150" height="100" rx="12" fill="#fff" stroke="#d8d2c4"/>
+  <text x="622" y="86" font-weight="700">Snapshot</text>
+  <text x="622" y="106" font-size="12" fill="#4a4e57">feed · portfolio</text>
+  <text x="622" y="122" font-size="12" fill="#4a4e57">people · research/*</text>
+  <text x="622" y="138" font-size="12" fill="#4a4e57">companies registry</text>
+  <text x="622" y="154" font-size="11" fill="#4a4e57">GitHub Pages (static)</text>
+
+  <!-- device -->
+  <rect x="790" y="62" width="150" height="470" rx="20" fill="#15171c"/>
+  <text x="806" y="90" font-weight="700" fill="#f6f4ef">Investor's phone</text>
+  <text x="806" y="108" font-size="11.5" fill="#c9c4b8">PWA</text>
+  <rect x="804" y="122" width="128" height="34" rx="8" fill="#2a2e36"/><text x="814" y="144" fill="#f6f4ef">Brief (Push)</text>
+  <rect x="804" y="164" width="128" height="34" rx="8" fill="#2a2e36"/><text x="814" y="186" fill="#f6f4ef">Ask (Pull)</text>
+  <rect x="804" y="206" width="128" height="34" rx="8" fill="#2a2e36"/><text x="814" y="228" fill="#f6f4ef">People</text>
+  <rect x="804" y="256" width="128" height="116" rx="8" fill="#1f2b5c" stroke="#3a5bd9"/>
+  <text x="814" y="278" fill="#f6f4ef" font-weight="600">Private network</text>
+  <text x="814" y="298" fill="#c9cff5" font-size="11.5">contacts, ties</text>
+  <text x="814" y="316" fill="#c9cff5" font-size="11.5">matching engine</text>
+  <text x="814" y="334" fill="#c9cff5" font-size="11.5">paths, who-to-call</text>
+  <text x="814" y="352" fill="#c9cff5" font-size="11.5">never uploaded</text>
+  <rect x="804" y="384" width="128" height="52" rx="8" fill="#2a2e36"/>
+  <text x="814" y="404" fill="#f6f4ef" font-size="12">alert thresholds</text>
+  <text x="814" y="422" fill="#c9c4b8" font-size="11">evaluated on-device</text>
+  <rect x="804" y="448" width="128" height="66" rx="8" fill="#2a2e36"/>
+  <text x="814" y="468" fill="#f6f4ef" font-size="12">import</text>
+  <text x="814" y="486" fill="#c9c4b8" font-size="11">LinkedIn export</text>
+  <text x="814" y="502" fill="#c9c4b8" font-size="11">(consented)</text>
+
+  <!-- arrows -->
+  <path d="M194 104 H236" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M194 156 H236" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M194 208 H236" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M194 260 H236" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M400 298 V320" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M566 112 H608" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M758 112 H790" stroke="#4a4e57" marker-end="url(#a)"/>
+  <path d="M566 500 H700 V180 H790" stroke="#4a4e57" fill="none" marker-end="url(#a)"/>
+  <text x="600" y="492" font-size="11" fill="#4a4e57">dossier for any ticker</text>
+  <path d="M194 300 C 210 420, 210 500, 236 500" stroke="#4a4e57" fill="none" marker-end="url(#a)"/>
+  <text x="604" y="200" font-size="11.5" fill="#3a5bd9">public → device only;</text>
+  <text x="604" y="216" font-size="11.5" fill="#3a5bd9">nothing flows back</text>
+</svg>

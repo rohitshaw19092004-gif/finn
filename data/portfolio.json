@@ -1,0 +1,16 @@
+{
+  "_note": "Mock portfolio for the demo (weights are illustrative). Research list = names to demo on-demand Pull; the engine works for any NSE symbol screener covers.",
+  "holdings": [
+    {"symbol": "HDFCBANK", "weight": 8.5}, {"symbol": "RELIANCE", "weight": 7.5}, {"symbol": "INFY", "weight": 6.0},
+    {"symbol": "BHARTIARTL", "weight": 6.0}, {"symbol": "LT", "weight": 6.5}, {"symbol": "BAJFINANCE", "weight": 5.5},
+    {"symbol": "SUNPHARMA", "weight": 5.0}, {"symbol": "TITAN", "weight": 4.5}, {"symbol": "MARUTI", "weight": 4.5},
+    {"symbol": "TRENT", "weight": 5.0}, {"symbol": "ETERNAL", "weight": 5.5}, {"symbol": "HAL", "weight": 5.0},
+    {"symbol": "POLYCAB", "weight": 4.5}, {"symbol": "DIXON", "weight": 5.0}, {"symbol": "KAYNES", "weight": 4.0},
+    {"symbol": "NAVINFLUOR", "weight": 5.0}, {"symbol": "DEEPAKNTR", "weight": 3.5}, {"symbol": "CREDITACC", "weight": 3.5}
+  ],
+  "research": ["ASIANPAINT", "CLEAN", "PIDILITIND"],
+  "bse_codes": {"NAVINFLUOR": "532504", "HDFCBANK": "500180", "INFY": "500209", "RELIANCE": "500325", "BHARTIARTL": "532454",
+    "LT": "500510", "SUNPHARMA": "524715", "TITAN": "500114", "BAJFINANCE": "500034", "MARUTI": "532500", "DEEPAKNTR": "506401",
+    "DIXON": "540699", "KAYNES": "543664", "POLYCAB": "542652", "TRENT": "500251", "ETERNAL": "543320", "CREDITACC": "541770",
+    "HAL": "541154", "ASIANPAINT": "500820", "PIDILITIND": "500331", "CLEAN": "543318"}
+}

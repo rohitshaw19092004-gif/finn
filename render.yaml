@@ -1,0 +1,12 @@
+# Render blueprint: free web service for the live research API.
+services:
+  - type: web
+    name: finn-api
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false

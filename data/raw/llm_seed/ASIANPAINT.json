@@ -1,0 +1,54 @@
+{
+  "_generator": "Build-time run: Claude (Anthropic) read the pre-filtered management excerpts (finn/intel/transcripts.py:prefilter) of the 5 calls listed in sources, using the same prompts and JSON schemas the pipeline sends to Gemini. `finn refresh` with GEMINI_API_KEY regenerates this.",
+  "guidance": [
+    {"said_in": "Nov 2025", "metric": "EBITDA margin", "statement": "Maintain the 18–20% PBDIT margin band", "target": "18–20%", "horizon": "ongoing", "quote": "it is okay to maintain the whole guidance of 18 to 20% PBDIT margin band", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Nov 2025", "metric": "revenue growth", "statement": "Aim for mid-single-digit value growth, approaching high single digits by year-end", "target": "mid → high single digit", "horizon": "FY26", "quote": "if we are able to hit, mid-single-digit value growth, we would come closer to a higher digit value growth at the end of the year", "speaker": "Amit Syngle", "kind": "directional"},
+    {"said_in": "Nov 2025", "metric": "capex", "statement": "VAM-VAE backward-integration project (~₹3,250 Cr) to come on stream in Q1 FY27", "target": "₹3,250 Cr capex; Q1 FY27", "horizon": "Q1 FY27", "quote": "that is something which we are going to look at unfolding in quarter one of next year", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Feb 2026", "metric": "volume growth", "statement": "High-single-digit volume band to hold in Q4 FY26", "target": "high single digit", "horizon": "Q4 FY26", "quote": "as we go ahead, this band would remain, in terms of what we would be able to target for the Q4 as well", "speaker": "Amit Syngle", "kind": "directional"},
+    {"said_in": "Jun 2026", "metric": "volume growth", "statement": "FY27 decorative volume growth of 8–10%", "target": "8–10%", "horizon": "FY27", "quote": "demand conditions should continue giving us closer to high single-digit volume growth in the band of about 8 -10%", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Aug 2026", "metric": "volume growth", "statement": "Reaffirms 8–10% volume growth for full FY27", "target": "8–10%", "horizon": "FY27", "quote": "At the current stage, we are looking at the band of 8-10% for the full FY27.", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Aug 2026", "metric": "EBITDA margin", "statement": "18–20% PBDIT guidance holds; Q2 seasonally weaker", "target": "18–20%", "horizon": "FY27", "quote": "We are still garnering around the guidance of 18-20% of our PBDIT margins holds.", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Nov 2026", "metric": "volume growth", "statement": "Expects ~8–9% volume growth going forward", "target": "8–9%", "horizon": "rest of FY27", "quote": "it would be reasonable to expect to see a volume growth of about 8% to 9% going forward", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Nov 2026", "metric": "gross margin", "statement": "Gross margin band of 41–43%", "target": "41–43%", "horizon": "FY27", "quote": "This band of about 41% to 43% would really be the band we should be looking forward to.", "speaker": "Amit Syngle", "kind": "explicit"},
+    {"said_in": "Nov 2026", "metric": "EBITDA margin", "statement": "Full-year PBDIT margin within 18–20%", "target": "18–20%", "horizon": "FY27", "quote": "for the year we should be able to maintain the band of what we have spoken of 18% to 20%", "speaker": "Amit Syngle", "kind": "explicit"}
+  ],
+  "promises": {
+    "promises": [
+      {"said_in": "Nov 2025", "metric": "EBITDA margin", "promise": "Hold an 18–20% PBDIT margin", "quote": "maintain the whole guidance of 18 to 20% PBDIT margin band", "outcome": "Met every quarter if other income is counted (18.5–23.2%); core operating margin fell to 15.6% in Sep-26", "evidence": "PBDIT incl. other income: 20.4%, 20.9%, 21.5%, 23.2%, 18.5% (Sep-25…Sep-26); OPM Sep-26 15.6%", "verdict": "delivered"},
+      {"said_in": "Nov 2025", "metric": "revenue growth", "promise": "Mid-single-digit value growth, nearer high single digits by year-end", "quote": "we would come closer to a higher digit value growth at the end of the year", "outcome": "FY26 revenue +4.9%; the March quarter exited at +11% YoY", "evidence": "₹33,906 Cr → ₹35,584 Cr; Mar-26 quarter ₹9,247 Cr vs ₹8,359 Cr", "verdict": "delivered"},
+      {"said_in": "Feb 2026", "metric": "volume growth", "promise": "High-single-digit volume growth to hold in Q4", "quote": "this band would remain ... for the Q4 as well", "outcome": "Q4 FY26 decorative volume grew 12.4% — above the band", "evidence": "Management, Q4 FY26 call", "verdict": "delivered"},
+      {"said_in": "Jun 2026", "metric": "volume growth", "promise": "8–10% volume growth for FY27", "quote": "in the band of about 8 -10%", "outcome": "~9% in Q1, 7% in Q2; the range was trimmed to 8–9% in the Nov call", "evidence": "Management, Aug & Nov 2026 calls", "verdict": "moved goalposts"},
+      {"said_in": "Nov 2025", "metric": "capex", "promise": "VAM-VAE plant to come on stream in Q1 FY27", "quote": "we are going to look at unfolding in quarter one of next year", "outcome": "Commissioned by the Q2 FY27 call; only part capacity used until March, full use from FY28", "evidence": "Nov 2026 call", "verdict": "partly"},
+      {"said_in": "Nov 2026", "metric": "gross margin", "promise": "Gross margin 41–43% and full-year PBDIT 18–20%", "quote": "This band of about 41% to 43% would really be the band", "outcome": "Horizon not over", "evidence": "—", "verdict": "pending"}
+    ],
+    "narrative_vs_numbers": [
+      {"theme": "Margins", "management_says": "The 18–20% PBDIT band holds for the year", "numbers_say": "Holds only with other income (₹290 Cr in Sep-26); core operating margin 15.6% — lowest of the last six quarters; EBITDA −28% QoQ, +4% YoY", "agree": false},
+      {"theme": "Growth", "management_says": "Volume growth 8–10% (now 8–9%), price increases of ~7% taken", "numbers_say": "Revenue +18% and +17% YoY in Jun-26 and Sep-26 quarters", "agree": true},
+      {"theme": "Pricing power", "management_says": "As leader we can command a premium; calibrated increases", "numbers_say": "Sep-26 revenue +17% YoY but EBITDA only +4% — costs outran price", "agree": false}
+    ],
+    "credibility": "Hits its margin band on an other-income-inclusive definition and beat on volume in good quarters, but has started trimming the FY27 volume range and core margin slipped to 15.6% in September."
+  },
+  "business_mix": {
+    "what_it_does": "India's largest decorative paints company, with industrial-coatings joint ventures (including APPPG), international operations and a home-décor arm sold through Beautiful Home stores; backward-integrating into VAM-VAE and white cement.",
+    "segments": [
+      {"name": "Decorative paints (India)", "share_pct": null, "note": "core business; 8–10% volume guide"},
+      {"name": "Industrial coatings (JVs incl. APPPG)", "share_pct": null, "note": "growing faster than decorative per management"},
+      {"name": "International", "share_pct": null, "note": "—"},
+      {"name": "Home décor (Beautiful Home)", "share_pct": null, "note": "—"}
+    ],
+    "source": "Management commentary, Q2 FY26–Q2 FY27 calls (segment shares not stated in the calls read)"
+  },
+  "bull_bear": {
+    "bull": [
+      "Top line re-accelerating: revenue +18% and +17% YoY in the Jun-26 and Sep-26 quarters after a flat FY25.",
+      "Cash machine: 5-yr operating cash flow 1.09× PAT and ₹15,070 Cr free cash flow, positive every year.",
+      "Backward integration (VAM-VAE ~₹3,250 Cr; white cement) now commissioned — cost support from FY28."
+    ],
+    "bear": [
+      "Core margin 15.6% in Sep-26 — below the 18–20% band unless ₹290 Cr of other income is counted.",
+      "Profit lagging sales: Sep-26 EBITDA +4% YoY on +17% revenue; 3-yr revenue CAGR ~1% vs 10% over 5 yrs.",
+      "Rich multiple for slowing earnings: P/E 48.8 while the FY27 volume guide was trimmed to 8–9% from 8–10%."
+    ],
+    "what_would_change_my_mind": "Q3 FY27 core operating margin back above 18% with volume growth ≥ 8%."
+  }
+}
