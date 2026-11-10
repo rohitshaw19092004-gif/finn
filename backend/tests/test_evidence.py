@@ -200,3 +200,27 @@ def test_full_offline_refresh_with_flaky_model_reports_honestly(fake_gemini, mon
     assert all(f.get("summary_by") in (None, "seeded", "rule", "llm") for f in feed["filings"])
     blob = (tmp_path / "meta.json").read_text()
     assert "AIzaFAKE" not in blob
+
+
+# ---------------------------------------------------------------- transcript layouts (RELIANCE/INFY/BHARTIARTL case)
+def _clean_pages():
+    return (RAW / "transcripts" / "01002668-d786-415d-9d3d-025cabcfec27.txt").read_text().split("\f")
+
+
+def test_speakers_found_when_pdf_loses_line_breaks():
+    import re as _re
+    ex = tx.prefilter([p.replace("\n", " ") for p in _clean_pages()])
+    assert len(ex) >= 10 and {"Siddharth Sikchi"} <= {e["speaker"] for e in ex}
+
+
+def test_speaker_with_title_after_dash():
+    import re as _re
+    pages = [_re.sub(r"^(Siddharth Sikchi):", r"\1 – Executive Director:", p, flags=_re.M) for p in _clean_pages()]
+    assert "Siddharth Sikchi" in {e["speaker"] for e in tx.prefilter(pages)}
+
+
+def test_no_speaker_markers_falls_back_to_cue_sentences():
+    import re as _re
+    pages = [_re.sub(r"^(\s*[A-Z][A-Za-z.\- ]{2,40}):", r"\1", p, flags=_re.M) for p in _clean_pages()]
+    ex = tx.prefilter(pages)
+    assert len(ex) >= 3 and all(e["speaker"] == "unattributed" for e in ex)

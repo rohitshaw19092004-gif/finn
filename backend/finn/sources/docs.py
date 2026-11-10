@@ -45,7 +45,9 @@ def clean(text: str) -> str:
     return text.strip()
 
 
-SPEAKER = re.compile(r"^\s*([A-Z][A-Za-z.\- ]{2,40}):\s*", re.M)
+# "Name:" at a line start, or after a sentence end when the PDF lost its line breaks. Allows titles
+# after a dash ("Mukesh D. Ambani – Chairman:") and apostrophes ("Sanjay D'Souza:").
+SPEAKER = re.compile(r"(?:^|(?<=[.?!\"”’]\s))\s*([A-Z][A-Za-z.'’\- ]{2,40}(?:\s[–—-]\s[A-Za-z&,.'’ ]{2,50})?):\s*", re.M)
 
 
 def speaker_turns(pages: list[str]) -> list[dict]:
@@ -58,7 +60,7 @@ def speaker_turns(pages: list[str]) -> list[dict]:
             cur["text"] += page[pos:m.start()]
             if cur["text"].strip():
                 turns.append(cur)
-            cur = {"speaker": m.group(1).strip(), "text": "", "page": i}
+            cur = {"speaker": re.split(r"\s[–—-]\s", m.group(1).strip())[0].strip(), "text": "", "page": i}
             pos = m.end()
         cur["text"] += page[pos:] + "\n"
     if cur["text"].strip():

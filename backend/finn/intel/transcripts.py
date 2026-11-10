@@ -74,12 +74,37 @@ def prefilter(pages: list[str], max_chars: int = 14000) -> list[dict]:
             continue
         q = turns[i - 1]["text"][-240:] if i and NON_MGMT.search(turns[i - 1]["speaker"]) is None and turns[i - 1]["speaker"] not in mgmt else ""
         keep.append({"speaker": t["speaker"], "page": t["page"], "q": q, "text": " ".join(hits)[:1600]})
+    if not keep:
+        keep = _fallback_excerpts(pages, turns)
     out, n = [], 0
     for k in keep:
         n += len(k["text"])
         if n > max_chars:
             break
         out.append(k)
+    return out
+
+
+BOILER = re.compile(r"ladies and gentlemen|welcome to the|question.{0,20}answer session|press star|"
+                    r"forward[- ]looking statements|safe harbou?r|disclaimer|recording|line of|thank you", re.I)
+
+
+def _fallback_excerpts(pages: list[str], turns: list[dict]) -> list[dict]:
+    """When speakers can't be told apart (transcript layouts that lose 'Name:' markers), keep the
+    forward-looking, quantitative sentences from the whole call, minus moderator boilerplate and
+    questions. Speaker is unknown; every quote is still verified against the transcript later."""
+    out = []
+    for i, page in enumerate(pages, start=1):
+        sents = re.split(r"(?<=[.!?])\s+", re.sub(r"\s+", " ", page))
+        hits = [x for x in sents if len(x) > 50 and CUES.search(x) and "?" not in x and not BOILER.search(x)]
+        chunk = ""
+        for h in hits:
+            if len(chunk) + len(h) > 1500 and chunk:
+                out.append({"speaker": "unattributed", "page": i, "q": "", "text": chunk.strip()})
+                chunk = ""
+            chunk += " " + h
+        if chunk.strip():
+            out.append({"speaker": "unattributed", "page": i, "q": "", "text": chunk.strip()})
     return out
 
 
