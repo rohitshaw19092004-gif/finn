@@ -3,7 +3,9 @@ import { useSnap } from "../data";
 import { moves, Move } from "../alerts";
 import type { Filing, Rules, Story, Tier, FiledPerson } from "../types";
 import { ago, CAT_LABEL, cls, crore, fq, parseTs, pct, save, store, tone } from "../util";
-import { Avatar, Chip, Spark, Tie } from "../ui/kit";
+import { Avatar, Icon, Panel, Seg, Spark, Tie } from "../ui/kit";
+import { AreaChart, DistBar, Num, StackedBars } from "../ui/charts";
+import { dayChange } from "../alerts";
 import { useNav } from "../nav";
 import { speak } from "../speech";
 
@@ -63,78 +65,252 @@ export function Brief({ rules, setRules, openRules }: { rules: Rules; setRules: 
     setSpeaking(() => stop);
   };
 
+  const winLabel = WINDOWS.find((w) => w[0] === rules.windowHours)?.[1] ?? "period";
+  const held = holdings.filter((h) => h.held);
+  const cov = useMemo(() => idx.coverage(held.map((h) => h.symbol)), [idx]); // eslint-disable-line
+  const covered = cov.filter((c) => c.insiders.length).length;
+  const ruleSorted = snap.meta.classification.exchange + snap.meta.classification.rule;
+  const mvSyms = new Set(mv.map((m) => m.symbol)).size;
   return (
-    <div className="screen brief">
-      <header className="top">
-        <div className="row between">
-          <div className="eyebrow">As of {asOf.toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</div>
-          <div className="row gap">
-            <button className="round" onClick={listen} aria-label={speaking ? "Stop" : "Listen to brief"} title="Listen to the brief">{speaking ? "■" : "▶"}</button>
-            <button className="round" onClick={openRules} aria-label="Watch rules" title="Watch rules">⚙</button>
-          </div>
+    <div className="screen brief dash">
+      <header className="top dash-head">
+        <div className="dash-title">
+          <h1 className="headline">
+            {act.length ? <><b>{act.length}</b> {act.length === 1 ? "thing needs" : "things need"} you.</> : <>Nothing needs you.</>}{" "}
+            <span className="dim">{routineFilings + glance.length} filings didn't.</span>
+          </h1>
+          <div className="sub-head">Morning brief · as of {asOf.toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</div>
         </div>
-        <h1 className="headline">
-          {act.length ? <><b>{act.length}</b> {act.length === 1 ? "thing needs" : "things need"} you.</> : <>Nothing needs you.</>}{" "}
-          <span className="dim">{routineFilings + glance.length} filings didn't.</span>
-        </h1>
-        <div className="chips scroll">
-          {WINDOWS.map(([h, l]) => <Chip key={h} active={rules.windowHours === h} onClick={() => setRules({ ...rules, windowHours: h })}>{l}</Chip>)}
+        <div className="dash-controls">
+          <Seg value={rules.windowHours} options={WINDOWS} onChange={(h) => setRules({ ...rules, windowHours: h })} />
+          <button className="btn ghost" onClick={listen} aria-label={speaking ? "Stop" : "Listen to brief"} title="Listen to the brief"><Icon name={speaking ? "stop" : "play"} size={13} /><span className="btn-l">{speaking ? "Stop" : "Listen"}</span></button>
+          <button className="btn" onClick={openRules} aria-label="Watch rules" title="Watch rules"><Icon name="rules" size={14} /><span className="btn-l">Watch rules</span></button>
         </div>
       </header>
 
-      {intro && <div className="intro">
-        <p><b>FINN reads every filing across your {holdings.filter((h) => h.held).length} holdings and only interrupts you for what moves the thesis.</b> Each card says what happened, why it matters, and who in your network can explain it.</p>
-        <p className="small dim">Ask digs into any company from its own filings and calls. People shows what your network can see that you can't. Your network stays on this phone.</p>
-        <button className="link small" onClick={() => { setIntro(false); save("introSeen", true); }}>Got it</button>
-      </div>}
+      <div className="stats">
+        <Stat i={0} label="Needs you" value={act.length} badge={glance.length ? `${glance.length} worth a glance` : "nothing else"} tone="violet" note={`in the last ${winLabel}`} />
+        <Stat i={1} label="Price alerts" value={mvSyms} badge={`±${rules.pricePct}% or ${rules.volMult}× volume`} tone={mvSyms ? "warn" : "up"} note="your rules, on device" />
+        <Stat i={2} label="Network coverage" value={covered} suffix={` / ${held.length}`} badge={`${held.length - covered} blind spot${held.length - covered === 1 ? "" : "s"}`} tone="up" note="holdings with an insider you know" />
+        <Stat i={3} label="Filings read" value={snap.meta.filings} badge={`${Math.round((ruleSorted / Math.max(1, snap.meta.filings)) * 100)}% without a model`} tone="up" note={`last ${snap.meta.window_days} days`} />
+      </div>
 
-      {mv.length > 0 && <MovesStrip moves={mv} />}
+      <div className="dash-charts">
+        <BookIndex />
+        <Allocation />
+      </div>
 
-      {act.length === 0 && (
-        <div className="quiet">
-          Quiet {WINDOWS.find((w) => w[0] === rules.windowHours)?.[1]}.{" "}
-          {rules.windowHours < 336 && <button className="link" onClick={() => setRules({ ...rules, windowHours: 336 })}>See the last 2 weeks →</button>}
+      <div className="dash-main">
+        <div className="col-main">
+          {intro && <div className="intro">
+            <p><b>FINN reads every filing across your {held.length} holdings and only interrupts you for what moves the thesis.</b> Each card says what happened, why it matters, and who in your network can explain it.</p>
+            <p className="small dim">Ask digs into any company from its own filings and calls. People shows what your network can see that you can't. Your network stays on this phone.</p>
+            <button className="btn" onClick={() => { setIntro(false); save("introSeen", true); }}>Got it</button>
+          </div>}
+
+          <Panel i={4} title="Needs you" count={act.length} className="stories-panel" right={<span className="tiny dim">ranked by materiality · {winLabel}</span>}>
+            {act.length === 0 && (
+              <div className="quiet">
+                Quiet {winLabel}.{" "}
+                {rules.windowHours < 336 && <button className="link" onClick={() => setRules({ ...rules, windowHours: 336 })}>See the last 2 weeks →</button>}
+              </div>
+            )}
+            {act.length === 0 && lastAct && <>
+              <h3 className="sub">Last thing that needed you</h3>
+              <StoryCard st={lastAct} lead={byId.get(lastAct.lead)!} />
+            </>}
+            {act.slice(0, BUDGET).map((x, k) => <StoryCard key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} i={k} />)}
+            {act.length > BUDGET && <>
+              <h3 className="sub">Also needs you <span className="count">{act.length - BUDGET}</span></h3>
+              <ul className="glance">{act.slice(BUDGET).map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} full />)}</ul>
+            </>}
+          </Panel>
+
+          {glance.length > 0 && <Panel i={5} title="Worth a glance" count={glance.length}>
+            <ul className="glance">{glance.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} />)}</ul>
+          </Panel>}
+
+          {(routine.length > 0 || cleared.length > 0) && <Panel i={6} title="Filed away">
+            {routine.length > 0 && <>
+              <button className="routine-toggle" onClick={() => setShowRoutine(!showRoutine)}>
+                <span><b>{routineFilings}</b> routine filings</span>
+                <span className="dim small">{routineMix(routine.map((x) => x.lead))}</span>
+                <span className="chev">{showRoutine ? "−" : "+"}</span>
+              </button>
+              {showRoutine && <ul className="glance routine">{routine.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} compact />)}</ul>}
+            </>}
+            {cleared.length > 0 && <>
+              <button className="routine-toggle" onClick={() => setShowDone(!showDone)}><span>Cleared <b>{cleared.length}</b></span><span className="chev">{showDone ? "−" : "+"}</span></button>
+              {showDone && <ul className="glance">{cleared.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} doneLabel="Restore" />)}</ul>}
+            </>}
+          </Panel>}
         </div>
-      )}
-      {act.length === 0 && lastAct && <>
-        <h2 className="section">Last thing that needed you</h2>
-        <StoryCard st={lastAct} lead={byId.get(lastAct.lead)!} />
-      </>}
 
-      {act.slice(0, BUDGET).map((x) => <StoryCard key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} />)}
-
-      {act.length > BUDGET && <section className="block">
-        <h2 className="section">Also needs you <span className="count">{act.length - BUDGET}</span></h2>
-        <ul className="glance">{act.slice(BUDGET).map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} full />)}</ul>
-      </section>}
-
-      {glance.length > 0 && <section className="block">
-        <h2 className="section">Worth a glance <span className="count">{glance.length}</span></h2>
-        <ul className="glance">{glance.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} />)}</ul>
-      </section>}
-
-      {routine.length > 0 && <section className="block">
-        <button className="routine-toggle" onClick={() => setShowRoutine(!showRoutine)}>
-          <span><b>{routineFilings}</b> routine filings, filed away</span>
-          <span className="dim small">{routineMix(routine.map((x) => x.lead))}</span>
-          <span className="chev">{showRoutine ? "−" : "+"}</span>
-        </button>
-        {showRoutine && <ul className="glance routine">{routine.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} compact />)}</ul>}
-      </section>}
-
-      {cleared.length > 0 && <section className="block">
-        <button className="routine-toggle" onClick={() => setShowDone(!showDone)}><span>Cleared <b>{cleared.length}</b></span><span className="chev">{showDone ? "−" : "+"}</span></button>
-        {showDone && <ul className="glance">{cleared.map((x) => <GlanceRow key={x.st.id} st={x.st} lead={x.lead} onDone={() => toggleDone(x.st.id)} doneLabel="Restore" />)}</ul>}
-      </section>}
-      <footer className="foot">
-        Filings: {filingSources(snap.meta)} · Prices: EOD · {snap.meta.classification.exchange + snap.meta.classification.rule} of {snap.meta.filings} filings classified without a model
-        {snap.meta.run && <details className="health"><summary className={snap.meta.run.health === "ok" ? "up" : "warn-t"}>
-          · Refresh {snap.meta.run.health}{snap.meta.run.warnings.length ? ` (${snap.meta.run.warnings.length})` : ""}</summary>
-          {snap.meta.run.warnings.length > 0 && <ul>{snap.meta.run.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>}
-        </details>}
-      </footer>
+        <div className="col-side">
+          {mv.length > 0 ? <MovesStrip moves={mv} /> : <Panel i={4} title="Price watch"><div className="quiet small">No moves beyond your rules in the last {winLabel}.</div></Panel>}
+          <FilingFlow />
+          <AskCard />
+          <HoldingsPanel />
+          <HealthPanel />
+        </div>
+      </div>
     </div>
   );
+}
+
+function Stat({ label, value, suffix, badge, tone: t, note, i }: { label: string; value: number; suffix?: string; badge: string; tone: string; note: string; i: number }) {
+  return <section className="panel stat" style={{ ["--i" as string]: i }}>
+    <div className="stat-label">{label}<span className="tiny dim">{note}</span></div>
+    <Num value={value} suffix={suffix} />
+    <span className={cls("pill", t)}>{badge}</span>
+  </section>;
+}
+
+/** Weighted index of current holdings (constant current weights), rebased to 100 — EOD closes only. */
+function BookIndex() {
+  const { holdings } = useSnap();
+  const [range, setRange] = useState(250);
+  const data = useMemo(() => {
+    const held = holdings.filter((h) => h.held && h.weight && h.close.length > 30);
+    const base = held.reduce((a, h) => (h.dates.length > a.dates.length ? h : a), held[0]);
+    if (!base) return null;
+    const maps = held.map((h) => ({ w: h.weight!, m: new Map(h.dates.map((d, i) => [d, h.close[i]] as const)), v: new Map(h.dates.map((d, i) => [d, h.volume[i]] as const)), h }));
+    const dates = base.dates.slice(-range);
+    const first = new Map(maps.map((x) => [x.h.symbol, dates.map((d) => x.m.get(d)).find((v) => v != null)] as const));
+    const med = new Map(maps.map((x) => { const vs = x.h.volume.filter((v): v is number => !!v).sort((a, b) => a - b); return [x.h.symbol, vs[Math.floor(vs.length / 2)] || 1] as const; }));
+    const vals: number[] = [], vols: number[] = [];
+    let last = 100;
+    for (const d of dates) {
+      let num = 0, den = 0, rv = 0, rn = 0;
+      for (const x of maps) {
+        const c = x.m.get(d), f = first.get(x.h.symbol);
+        if (c != null && f) { num += x.w * (c / f); den += x.w; }
+        const v = x.v.get(d);
+        if (v) { rv += v / med.get(x.h.symbol)!; rn += 1; }
+      }
+      last = den ? (num / den) * 100 : last;
+      vals.push(last);
+      vols.push(rn ? rv / rn : 0);
+    }
+    return { dates, vals, vols };
+  }, [holdings, range]);
+  if (!data) return null;
+  const now = data.vals[data.vals.length - 1], chg = now - 100;
+  const day = data.vals.length > 1 ? (now / data.vals[data.vals.length - 2] - 1) * 100 : 0;
+  return <Panel i={4} className="index-panel" title={<>Your book <Icon name="chart" size={13} /></>} right={<Seg value={range} options={[[22, "1M"], [66, "3M"], [130, "6M"], [250, "1Y"]]} onChange={setRange} />}>
+    <div className="row gap wrap index-head">
+      <Num value={now} dp={2} />
+      <span className={cls("pill", chg >= 0 ? "up" : "down")}><Icon name="up" size={11} />{pct(chg, 1)} over {range >= 250 ? "1Y" : range >= 130 ? "6M" : range >= 66 ? "3M" : "1M"}</span>
+      <span className={cls("small num", tone(day))}>{pct(day, 2)} last session</span>
+    </div>
+    <AreaChart dates={data.dates} values={data.vals} volume={data.vols} height={window.innerWidth >= 1024 ? 250 : 200} fmt={(v) => v.toFixed(0)}
+      tip={(i) => <><div><b className="num">{data.vals[i].toFixed(2)}</b> <span className="tiny dim">index</span></div>
+        {i > 0 && <div className={cls("tiny num", tone(data.vals[i] - data.vals[i - 1]))}>{pct((data.vals[i] / data.vals[i - 1] - 1) * 100, 2)} that day</div>}
+        <div className="tiny dim">volume {data.vols[i].toFixed(1)}× normal</div></>} />
+    <div className="tiny dim">Holdings weighted by today's portfolio weights, EOD closes rebased to 100. Bars: average volume vs each stock's normal.</div>
+  </Panel>;
+}
+
+const SHADES = ["c1", "c2", "c3", "c4", "c5", "c6"];
+function Allocation() {
+  const { holdings } = useSnap();
+  const nav = useNav();
+  const groups = useMemo(() => {
+    const m = new Map<string, { w: number; syms: string[]; day: number }>();
+    holdings.filter((h) => h.held && h.weight).forEach((h) => {
+      const k = h.industry ?? h.sector ?? "Other";
+      const g = m.get(k) ?? { w: 0, syms: [], day: 0 };
+      g.w += h.weight!; g.syms.push(h.symbol); g.day += (dayChange(h) ?? 0) * h.weight!;
+      m.set(k, g);
+    });
+    const all = [...m.entries()].sort((a, b) => b[1].w - a[1].w);
+    const top = all.slice(0, 5), rest = all.slice(5);
+    if (rest.length) top.push(["Other sectors", { w: rest.reduce((a, [, g]) => a + g.w, 0), syms: rest.flatMap(([, g]) => g.syms), day: rest.reduce((a, [, g]) => a + g.day, 0) }]);
+    return top;
+  }, [holdings]);
+  const tot = groups.reduce((a, [, g]) => a + g.w, 0) || 1;
+  return <Panel i={5} className="alloc-panel" title="Allocation" right={<span className="tiny dim">by industry · weight</span>}>
+    <div className="alloc-total"><Num value={tot} dp={1} suffix="%" /><span className="tiny dim">of book in {groups.reduce((a, [, g]) => a + g.syms.length, 0)} stocks</span></div>
+    <DistBar parts={groups.map(([k, g], i) => ({ label: k, value: g.w, cls: SHADES[i % SHADES.length] }))} />
+    <ul className="alloc">{groups.map(([k, g], i) => <li key={k}>
+      <i className={SHADES[i % SHADES.length]} />
+      <span><b>{k}</b><span className="tiny dim">{((g.w / tot) * 100).toFixed(0)}% · {g.syms.slice(0, 3).map((s, j) => <span key={s}>{j ? ", " : ""}<button className="link-q" onClick={() => nav.company(s)}>{s}</button></span>)}{g.syms.length > 3 ? ` +${g.syms.length - 3}` : ""}</span></span>
+      <span className={cls("num small", tone(g.day))}>{pct(g.day / g.w * 100, 2)}</span>
+    </li>)}</ul>
+  </Panel>;
+}
+
+/** Filings per day by tier — what FINN read, and how little of it reached you. */
+function FilingFlow() {
+  const { filings } = useSnap();
+  const days = useMemo(() => {
+    const m = new Map<string, { act: number; glance: number; routine: number }>();
+    filings.forEach((f) => { const d = m.get(f.date) ?? { act: 0, glance: 0, routine: 0 }; d[f.tier] += 1; m.set(f.date, d); });
+    return [...m.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).slice(-10);
+  }, [filings]);
+  if (!days.length) return null;
+  const total = days.reduce((a, [, d]) => a + d.act + d.glance + d.routine, 0);
+  return <Panel i={6} title="Filings read" right={<span className="legend"><i className="c1" />needs you<i className="c3" />glance<i className="c5" />routine</span>}>
+    <div className="row gap index-head"><Num value={total} /><span className="pill violet">{days.reduce((a, [, d]) => a + d.act, 0)} reached you</span><span className="tiny dim">last {days.length} filing days</span></div>
+    <StackedBars labels={days.map(([d]) => d.slice(8))} height={120}
+      series={[{ name: "needs you", values: days.map(([, d]) => d.act), cls: "c1" }, { name: "glance", values: days.map(([, d]) => d.glance), cls: "c3" }, { name: "routine", values: days.map(([, d]) => d.routine), cls: "c5" }]} />
+  </Panel>;
+}
+
+function AskCard() {
+  const nav = useNav();
+  return <section className="panel promo" style={{ ["--i" as string]: 7 }}>
+    <div className="pixels" aria-hidden>{Array.from({ length: 14 }, (_, k) => <i key={k} style={{ ["--k" as string]: k, left: `${k % 2 ? 78 + ((k * 7) % 18) : 2 + ((k * 11) % 18)}%`, top: `${4 + ((k * 29) % 60)}%` }} />)}</div>
+    <span className="promo-icon"><Icon name="bot" size={22} /></span>
+    <h3>Ask FINN about any company</h3>
+    <p className="small dim">Promised vs delivered from its own earnings calls, every quote checked against the transcript — and who you know there.</p>
+    <button className="btn wide" onClick={() => nav.tab("ask")}>Try Ask</button>
+  </section>;
+}
+
+function HoldingsPanel() {
+  const snap = useSnap();
+  const nav = useNav();
+  const held = snap.holdings.filter((h) => h.held).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0));
+  const watch = snap.holdings.filter((h) => !h.held);
+  const Row = ({ h }: { h: typeof held[number] }) => {
+    const ch = dayChange(h);
+    return <tr onClick={() => nav.company(h.symbol)} tabIndex={0} onKeyDown={(e) => e.key === "Enter" && nav.company(h.symbol)}>
+      <td><span className="t-sym">{h.symbol}</span><span className="t-name">{h.industry ?? h.sector ?? ""}</span></td>
+      <td className="num">{h.close.length ? h.close[h.close.length - 1].toLocaleString("en-IN", { maximumFractionDigits: 1 }) : "—"}</td>
+      <td className={cls("num", tone(ch))}>{ch != null ? pct(ch * 100, 2) : "—"}</td>
+      <td className="num dim t-wt">{h.weight != null ? h.weight + "%" : ""}</td>
+      <td className="t-spark"><Spark data={h.close.slice(-30)} w={54} h={18} /></td>
+    </tr>;
+  };
+  return <Panel i={8} title="Portfolio" count={held.length} right={<span className="tiny dim">EOD · 1D · weight</span>}>
+    <table className="dtable"><thead><tr><th>Stock</th><th>Last</th><th>1D</th><th className="t-wt">Wt</th><th>30D</th></tr></thead>
+      <tbody>{held.map((h) => <Row key={h.symbol} h={h} />)}</tbody>
+      {watch.length > 0 && <><thead><tr><th colSpan={5} className="t-group">Research list</th></tr></thead>
+        <tbody>{watch.map((h) => <Row key={h.symbol} h={h} />)}</tbody></>}
+    </table>
+  </Panel>;
+}
+
+function HealthPanel() {
+  const { meta } = useSnap();
+  const run = meta.run;
+  const totals = (meta.llm as any)?.totals;
+  const research = run ? Object.values(run.research) : [];
+  const byStatus = new Map<string, number>();
+  research.forEach((r) => byStatus.set(r.status, (byStatus.get(r.status) ?? 0) + 1));
+  return <Panel i={9} title={<><Icon name="health" size={14} /> Data refresh</>} right={run && <span className={cls("pill", run.health === "ok" ? "up" : run.health === "failed" ? "down" : "warn")}>{run.health}</span>}>
+    <div className="kv small">
+      <span>Generated</span><span>{new Date(meta.generated_at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</span>
+      <span>Filings</span><span>{meta.filings} from {filingSources(meta)}</span>
+      <span>Classified</span><span>{meta.classification.exchange + meta.classification.rule} by rules, {meta.classification.llm ?? 0} by model</span>
+      {totals && <><span>Model calls</span><span>{totals.calls} ok · {totals.cached} cached{totals.failed ? <span className="warn-t"> · {totals.failed} failed</span> : null}{totals.deferred ? <span className="warn-t"> · {totals.deferred} deferred</span> : null}</span></>}
+      {byStatus.size > 0 && <><span>Dossiers</span><span>{[...byStatus.entries()].map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ")}</span></>}
+    </div>
+    {run && run.warnings.length > 0 && <details className="health"><summary className="small warn-t">{run.warnings.length} note{run.warnings.length > 1 ? "s" : ""} from this refresh</summary>
+      <ul className="small">{run.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details>}
+    {!run && <div className="tiny dim">Snapshot predates the refresh report.</div>}
+  </Panel>;
 }
 
 function filingSources(meta: ReturnType<typeof useSnap>["meta"]) {
@@ -168,8 +344,7 @@ function MovesStrip({ moves }: { moves: Move[] }) {
     return f.results ? `after ${fq(f.results.period)} results` : `after: ${(CAT_LABEL[st.category] ?? st.why).toLowerCase()}`;
   };
   return (
-    <section className="moves">
-      <h2 className="section">Price watch <span className="count">{list.length}</span></h2>
+    <Panel title="Price watch" count={list.length} className="moves" right={<span className="tiny dim">beyond your rules</span>}>
       <div className="moves-row scroll">
         {list.slice(0, 12).map((m) => {
           const h = snap.holdings.find((x) => x.symbol === m.symbol)!;
@@ -184,7 +359,7 @@ function MovesStrip({ moves }: { moves: Move[] }) {
           );
         })}
       </div>
-    </section>
+    </Panel>
   );
 }
 
@@ -215,7 +390,7 @@ function GlanceRow({ st, lead, onDone, compact, doneLabel, full }: { st: Story; 
   );
 }
 
-export function StoryCard({ st, lead, onDone }: { st: Story; lead: Filing; onDone?: () => void }) {
+export function StoryCard({ st, lead, onDone, i = 0 }: { st: Story; lead: Filing; onDone?: () => void; i?: number }) {
   const snap = useSnap();
   const nav = useNav();
   const h = snap.holdings.find((x) => x.symbol === st.symbol);
@@ -226,7 +401,7 @@ export function StoryCard({ st, lead, onDone }: { st: Story; lead: Filing; onDon
   const day = h ? h.close[h.close.length - 1] / h.close[h.close.length - 2] - 1 : null;
 
   return (
-    <article className="card">
+    <article className="card" style={{ ["--i" as string]: i }}>
       <div className="card-top">
         <button className="co" onClick={() => nav.company(st.symbol)}>
           <span className="sym">{st.symbol}</span>

@@ -19,6 +19,11 @@ FINN is a mobile-first agent for a public-markets investor. It works in three la
 |---|---|---|---|---|
 | ![](docs/screens/brief.png) | ![](docs/screens/brief-network.png) | ![](docs/screens/promises.png) | ![](docs/screens/people.png) | ![](docs/screens/path.png) |
 
+On a laptop the same app opens as a dashboard (sidebar, portfolio table, price watch, data-refresh health):
+
+![Desktop brief](docs/screens/dashboard.png)
+![Desktop dossier](docs/screens/dossier-desktop.png)
+
 ## Repository
 
 ```

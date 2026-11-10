@@ -53,7 +53,7 @@ export function FiledPersonSheet({ id, onClose }: { id: string | null; onClose: 
     <Sheet open onClose={onClose} title={<span className="row gap"><Avatar name={p.name} size={36} /><span><b>{p.name}</b><br /><span className="small dim">{p.event.role} · {p.symbol}</span></span></span>}>
       <p className="lede">{p.summary}</p>
       <div className="kv"><span>Change</span><span>{p.event.change}</span><span>Effective</span><span>{p.event.effective ? shortDate(p.event.effective) : "—"}</span>
-        <span>Source</span><span><a className="link" href={`https://www.bseindia.com/xml-data/corpfiling/AttachLive/${filingName}`} target="_blank" rel="noreferrer">{p.source} ↗</a></span></div>
+        <span>Source</span><span><a className="link" href={p.event.filing.startsWith("NSE:") ? `https://nsearchives.nseindia.com/corporate/${filingName}` : `https://www.bseindia.com/xml-data/corpfiling/AttachLive/${filingName}`} target="_blank" rel="noreferrer">{p.source} ↗</a></span></div>
       <h3 className="sub">How you can reach {p.name.split(" ")[0]}</h3>
       {paths.length ? paths.slice(0, 5).map((x, i) => (
         <div key={i} className="path">

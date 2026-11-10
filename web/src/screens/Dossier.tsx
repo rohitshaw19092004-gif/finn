@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { loadDossier, useSnap, apiBase } from "../data";
 import type { Analysis, Dossier as D, Note } from "../types";
 import { cls, crore, fq, pct, tone } from "../util";
-import { Bars, Spark, Verdict, Empty } from "../ui/kit";
+import { Bars, Verdict, Empty } from "../ui/kit";
+import { AreaChart, Num } from "../ui/charts";
 import { CallLine, StoryCard } from "./Brief";
 import { dayChange } from "../alerts";
 
@@ -55,23 +56,33 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       <header className="d-head">
         <div className="eyebrow">{s.sector?.join(" · ")}{h?.held ? ` · ${h.weight}% of portfolio` : " · not held"}</div>
         <h1 className="d-name">{d.name}</h1>
+        <div className="d-price">
+          <Num value={h?.close.length ? h.close[h.close.length - 1] : s.price} dp={2} prefix="₹" />
+          {ch != null && <span className={cls("pill", ch >= 0 ? "up" : "down")}>{pct(ch * 100, 2)} last session</span>}
+        </div>
         <div className="d-stats">
-          <div><span className="k">Price</span><span className="v num">₹{(h?.close.length ? h.close[h.close.length - 1] : s.price)?.toLocaleString("en-IN")}</span>{ch != null && <span className={cls("small num", tone(ch))}>{pct(ch * 100, 1)}</span>}</div>
           <div><span className="k">Mkt cap</span><span className="v num">{crore(s.mcap_cr)}</span></div>
           <div><span className="k">P/E</span><span className="v num">{s.pe ?? "—"}</span></div>
           <div><span className="k">{s.lender ? "ROE" : "ROCE"}</span><span className="v num">{(s.lender ? s.roe : s.roce) ?? "—"}%</span></div>
+          <div><span className="k">Div. yield</span><span className="v num">{s.div_yield ?? "—"}%</span></div>
         </div>
-        {h && <><Spark data={h.close.slice(-250)} w={340} h={44} fluid /><div className="tiny dim">1 year · EOD {h.dates[h.dates.length - 1]}</div></>}
+        {h && h.close.length > 2 && <div className="d-chart"><AreaChart dates={h.dates.slice(-250)} values={h.close.slice(-250)} volume={h.volume.slice(-250)} height={170}
+          fmt={(v) => "₹" + v.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          tip={(i) => { const c = h.close.slice(-250); return <><div><b className="num">₹{c[i].toLocaleString("en-IN", { maximumFractionDigits: 2 })}</b></div>
+            {i > 0 && <div className={cls("tiny num", tone(c[i] - c[i - 1]))}>{pct((c[i] / c[i - 1] - 1) * 100, 2)}</div>}</>; }} />
+          <div className="tiny dim">1 year · EOD {h.dates[h.dates.length - 1]}</div></div>}
       </header>
 
       <AnalysisBanner a={d.analysis} prose={d.generated_by.prose} />
 
       <nav className="d-tabs scroll">{SECTIONS.map(([k, l]) => <button key={k} className={cls(active === k && "on")} onClick={() => go(k)}>{l}</button>)}</nav>
 
+      <div className="d-grid">
+      <div className="d-main">
       {stories.length > 0 && <div className="d-news">{stories.map((st) => <StoryCard key={st.id} st={st} lead={snap.byId.get(st.lead)!} />)}</div>}
 
       <section ref={reg("snap")} className="d-sec">
-        <h2 className="section">Snapshot</h2>
+        <h2 className="section panel-title">Snapshot</h2>
         <p className="lede">{d.business_mix?.what_it_does ?? s.about}</p>
         {d.business_mix?.segments?.length ? <Segments segs={d.business_mix.segments} src={d.business_mix.source} /> : null}
         {s.latest_quarter && <QuarterTable d={d} />}
@@ -79,7 +90,7 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       </section>
 
       <section ref={reg("promises")} className="d-sec">
-        <h2 className="section">Promised vs delivered</h2>
+        <h2 className="section panel-title">Promised vs delivered</h2>
         {d.promises ? <>
           <p className="lede">{d.promises.credibility}</p>
           <ul className="promises">{d.promises.promises.map((p, i) => (
@@ -102,8 +113,10 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
         </> : <Empty>{missingWhy(d.analysis, "Reading management commentary")} The numbers below are computed from the filings and work without it.</Empty>}
       </section>
 
+      </div>
+      <div className="d-side">
       <section ref={reg("traj")} className="d-sec">
-        <h2 className="section">Trajectory</h2>
+        <h2 className="section panel-title">Trajectory</h2>
         <Notes notes={d.trajectory.notes} />
         <Bars labels={d.trajectory.years.slice(-8).map((y) => "'" + y.slice(-2))} fmt={String}
           series={[{ name: "Revenue", values: d.trajectory.revenue.slice(-8), color: "var(--ink-3)" }, { name: s.lender ? "Financing profit" : "Operating profit", values: d.trajectory.operating_profit.slice(-8), color: "var(--accent)" }]} />
@@ -115,7 +128,7 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       </section>
 
       <section ref={reg("bs")} className="d-sec">
-        <h2 className="section">Balance sheet</h2>
+        <h2 className="section panel-title">Balance sheet</h2>
         <Notes notes={d.balance_sheet.notes} />
         {!s.lender && <table className="mini"><thead><tr><th />{d.balance_sheet.cols.map((c) => <th key={c}>{c.replace(/^\w+ 20/, "'")}</th>)}</tr></thead><tbody>
           <tr><td>Debt</td>{d.balance_sheet.debt.map((v, i) => <td key={i} className="num">{v?.toLocaleString("en-IN") ?? "—"}</td>)}</tr>
@@ -129,14 +142,14 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       </section>
 
       <section ref={reg("cash")} className="d-sec">
-        <h2 className="section">Cash quality</h2>
+        <h2 className="section panel-title">Cash quality</h2>
         <Notes notes={d.cash.notes} />
         {!s.lender && <Bars labels={d.cash.cols.map((c) => "'" + c.slice(-2))} fmt={String}
           series={[{ name: "PAT", values: d.cash.pat, color: "var(--ink-3)" }, { name: "Cash from ops", values: d.cash.cfo, color: "var(--accent)" }, { name: "Free cash flow", values: d.cash.fcf, color: "var(--accent-2)" }]} />}
       </section>
 
       <section ref={reg("debate")} className="d-sec">
-        <h2 className="section">Bull vs bear</h2>
+        <h2 className="section panel-title">Bull vs bear</h2>
         {d.bull_bear ? <div className="debate">
           <div className="bull"><h3>Bull</h3><ul>{d.bull_bear.bull.map((x, i) => <li key={i}>{x}{d.bull_bear!.untraced?.includes(x) && <Untraced />}</li>)}</ul></div>
           <div className="bear"><h3>Bear</h3><ul>{d.bull_bear.bear.map((x, i) => <li key={i}>{x}{d.bull_bear!.untraced?.includes(x) && <Untraced />}</li>)}</ul></div>
@@ -145,9 +158,11 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
       </section>
 
       <section ref={reg("people")} className="d-sec">
-        <h2 className="section">Who to call about {s.name?.split(" ")[0]}</h2>
+        <h2 className="section panel-title">Who to call about {s.name?.split(" ")[0]}</h2>
         <CallLine sym={sym} limit={4} />
       </section>
+      </div>
+      </div>
 
       <footer className="sources">
         <div><b>Sources (primary only).</b> Statements: <a className="link" href={d.sources.statements} target="_blank" rel="noreferrer">screener.in (from exchange filings)</a>.
