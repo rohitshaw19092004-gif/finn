@@ -10,6 +10,7 @@ name: refresh-snapshot
 on:
   schedule:
     - cron: "45 10 * * 1-5"
+    - cron: "30 14 * * 1-5"
   workflow_dispatch: {}
 permissions:
   contents: write
