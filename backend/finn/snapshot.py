@@ -39,10 +39,17 @@ _DOC_MEMO: dict[str, str | None] = {}
 
 def _reset_report() -> None:
     REPORT.clear()
-    REPORT.update({"sources": {"fundamentals": {}, "prices": {}, "filings": {}}, "warnings": [],
+    REPORT.update({"sources": {"fundamentals": {}, "prices": {}, "filings": {}}, "warnings": [], "notes": [],
                    "people": Counter(), "summaries": Counter(), "research": {}})
     DOCS.clear()
     _DOC_MEMO.clear()
+
+
+def note(msg: str) -> None:
+    """Something expected that the pipeline already handled (shown, but doesn't lower run health)."""
+    if msg not in REPORT.setdefault("notes", []):
+        REPORT["notes"].append(msg)
+    log.info(msg)
 
 
 def warn(msg: str) -> None:
@@ -125,7 +132,7 @@ def filings(codes: dict[str, str], days: int) -> list[dict]:
                 continue
             except http.PermanentError as e:
                 bse_refused = str(e)
-                warn(f"BSE announcements API refused this runner ({str(e).split(' for ')[0]}); "
+                note(f"BSE announcements API refused this runner ({str(e).split(' for ')[0]}); "
                      "filings for this run come from NSE.")
             except Exception as e:
                 log.warning("BSE %s: %s — trying NSE", sym, e)
@@ -393,7 +400,7 @@ def build(live_research: bool = True) -> dict:
                 d = research.numbers_only(s, cos[s], "Live research disabled for this run.")
             _write(f"research/{s}.json", d)
             a = d.get("analysis", {})
-            rrep[s] = {"status": a.get("status"), "coverage": a.get("coverage"),
+            rrep[s] = {"status": a.get("status"), "coverage": a.get("coverage"), "limited_by": a.get("limited_by"),
                        "verified_quotes": a.get("verified_quotes", 0), "rejected": len(a.get("rejected") or [])}
             log.info("research %s: %s, %s", s, a.get("status"), a.get("coverage"))
         except Exception as e:
@@ -448,7 +455,11 @@ def finish_report(universe: list[str]) -> dict:
     stale = [s for grp in src.values() for s, v in grp.items() if "stale" in str(v)]
     u = llm.usage_report()
     research_bad = {s: r["status"] for s, r in REPORT["research"].items()
-                    if r.get("status") not in ("complete", "seeded")}
+                    if r.get("status") not in ("complete", "seeded") and r.get("limited_by") != "sources"}
+    thin = [s for s, r in REPORT["research"].items() if r.get("limited_by") == "sources"]
+    if thin:
+        note("Fewer earnings-call transcripts available than a full analysis needs (not published or not "
+             f"readable), so these dossiers are partial: {', '.join(thin)}")
     if missing_px:
         warn(f"No price series for {len(missing_px)} companies: {', '.join(missing_px)}")
     if missing_fund:
@@ -483,7 +494,7 @@ def finish_report(universe: list[str]) -> dict:
         health = "degraded"
     if len(missing_px) > n / 2 or len(missing_fund) > n / 2 or len(no_feed) > n / 2:
         health = "failed"
-    return {"health": health, "warnings": REPORT["warnings"], "sources": src, "documents": dict(DOCS),
+    return {"health": health, "warnings": REPORT["warnings"], "notes": REPORT.get("notes", []), "sources": src, "documents": dict(DOCS),
             "people": dict(REPORT["people"]), "summaries": dict(REPORT["summaries"]),
             "research": REPORT["research"]}
 
@@ -497,6 +508,8 @@ def write_step_summary(meta: dict) -> None:
              f"{meta['stories']} stories", ""]
     if run["warnings"]:
         lines += ["### Warnings", *[f"- {w}" for w in run["warnings"]], ""]
+    if run.get("notes"):
+        lines += ["### Notes (expected, handled)", *[f"- {w}" for w in run["notes"]], ""]
     lines += ["### Model calls", "| tier | models | ok | cached | failed | deferred |", "|---|---|---|---|---|---|"]
     for t, v in u["tiers"].items():
         lines.append(f"| {t} | {' → '.join(v['models'])} | {v['calls']} | {v['cached']} | {v['failed']} | {v['deferred']} |")

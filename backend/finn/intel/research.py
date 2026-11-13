@@ -55,6 +55,21 @@ def _company(symbol: str) -> dict:
     return screener.fetch_company(symbol)
 
 
+def direct_pdf(url: str) -> str:
+    """Company sites often link a viewer page (…/pdf-viewer?pdf=/content/…/call.pdf) instead of the
+    file. Pull the PDF address out of the query string so the download gets the document itself."""
+    from urllib.parse import parse_qs, unquote, urljoin, urlparse
+    u = urlparse(url)
+    if u.path.lower().endswith(".pdf"):
+        return url
+    for key in ("pdf", "file", "url", "src", "doc", "path"):
+        for v in parse_qs(u.query).get(key, []):
+            v = unquote(v).strip()
+            if v.lower().split("?")[0].endswith(".pdf"):
+                return urljoin(f"{u.scheme}://{u.netloc}/", v)
+    return url
+
+
 def _transcript_pages(link: dict) -> list[str]:
     if link.get("file"):
         local = RAW / "transcripts" / link["file"].replace(".pdf", ".txt")
@@ -63,7 +78,7 @@ def _transcript_pages(link: dict) -> list[str]:
         if settings.offline:
             return []
         return docs.cached_text(link["file"], lambda: bse.document(link["file"]))
-    url = link.get("url") or ""
+    url = direct_pdf(link.get("url") or "")
     if url.startswith("http") and not settings.offline:       # company-hosted transcript
         name = hashlib.sha256(url.encode()).hexdigest()[:24] + ".pdf"
         return docs.cached_text(name, lambda: http.get(url, binary=True, ttl=None))
@@ -168,6 +183,8 @@ def build(symbol: str, progress: Callable[[str, str], None] = lambda step, msg: 
                          f"({len(rejected)} rejected), {len(analysed)}/{len(links)} calls analysed")
 
     use_seed = bool(seed) and (not can_call or not live_complete)
+    sec_bad: list = []
+    model_bad: list = []
     notes: list[str] = []
     sections: dict[str, dict] = {}
     if use_seed:
@@ -244,6 +261,9 @@ def build(symbol: str, progress: Callable[[str, str], None] = lambda step, msg: 
             "coverage": f"{len(analysed)}/{len(links)} calls analysed this refresh",
             "transcripts": tstat or [{"period": l["period"], "url": l["url"], "status": "not_attempted"} for l in links],
             "sections": sections, "verified_quotes": len(guidance), "rejected": rejected[:20], "notes": notes,
+            # partial because documents are missing/unreadable (nothing to retry) vs. because model calls failed
+            "limited_by": ("sources" if status == "partial" and source == "live" and not sec_bad and not model_bad
+                           else "model" if status in ("partial", "failed", "deferred") else None),
         },
         "sources": {"transcripts": [{"period": l["period"], "url": l["url"]} for l in links],
                     "annual_reports": c.get("annualReports", [])[:2],

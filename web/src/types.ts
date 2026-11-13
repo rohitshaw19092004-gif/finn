@@ -43,7 +43,7 @@ export interface Meta {
   generated_at: string; as_of: string | null; window_days: number; filings: number; stories: number;
   classification: Record<string, number>; doc_pass: number; llm: Record<string, any>; models: Record<string, string | string[]>;
   offline: boolean; sources: Record<string, string>;
-  run?: { health: "ok" | "degraded" | "failed"; warnings: string[]; sources: Record<string, Record<string, string>>;
+  run?: { health: "ok" | "degraded" | "failed"; warnings: string[]; notes?: string[]; sources: Record<string, Record<string, string>>;
     documents: Record<string, number>; research: Record<string, { status: string; coverage?: string }> };
 }
 

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useSnap } from "../data";
 import { moves, Move } from "../alerts";
 import type { Filing, Rules, Story, Tier, FiledPerson } from "../types";
-import { ago, CAT_LABEL, cls, crore, fq, parseTs, pct, save, store, tone } from "../util";
+import { ago, CAT_LABEL, cls, crore, fq, parseTs, pct, save, store, tone, chg, chgTone } from "../util";
 import { Avatar, Icon, Panel, Seg, Spark, Tie } from "../ui/kit";
 import { AreaChart, DistBar, Num, StackedBars } from "../ui/charts";
 import { dayChange } from "../alerts";
@@ -307,8 +307,8 @@ function HealthPanel() {
       {totals && <><span>Model calls</span><span>{totals.calls} ok · {totals.cached} cached{totals.failed ? <span className="warn-t"> · {totals.failed} failed</span> : null}{totals.deferred ? <span className="warn-t"> · {totals.deferred} deferred</span> : null}</span></>}
       {byStatus.size > 0 && <><span>Dossiers</span><span>{[...byStatus.entries()].map(([k, v]) => `${v} ${k.replace("_", " ")}`).join(" · ")}</span></>}
     </div>
-    {run && run.warnings.length > 0 && <details className="health"><summary className="small warn-t">{run.warnings.length} note{run.warnings.length > 1 ? "s" : ""} from this refresh</summary>
-      <ul className="small">{run.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul></details>}
+    {run && (() => { const allNotes = [...run.warnings, ...(run.notes ?? [])]; return allNotes.length > 0 && <details className="health"><summary className={cls("small", run.warnings.length ? "warn-t" : "dim")}>{allNotes.length} note{allNotes.length > 1 ? "s" : ""} from this refresh</summary>
+      <ul className="small">{run.warnings.map((w, i) => <li key={"w" + i}>{w}</li>)}{(run.notes ?? []).map((w, i) => <li key={"n" + i} className="dim">{w}</li>)}</ul></details>; })()}
     {!run && <div className="tiny dim">Snapshot predates the refresh report.</div>}
   </Panel>;
 }
@@ -443,7 +443,7 @@ function ResultsBody({ lead }: { lead: Filing }) {
         <thead><tr><th /><th>{r.period.replace(" 20", " '")}</th><th>QoQ</th><th>YoY</th></tr></thead>
         <tbody>{r.metrics.map((m) => (
           <tr key={m.label}><td>{m.label}</td><td className="num">{crore(m.value)}</td>
-            <td className={cls("num", tone(m.qoq))}>{pct(m.qoq)}</td><td className={cls("num", tone(m.yoy))}>{pct(m.yoy)}</td></tr>
+            <td className={cls("num", chgTone(m, "qoq"))}>{chg(m, "qoq")}</td><td className={cls("num", chgTone(m, "yoy"))}>{chg(m, "yoy")}</td></tr>
         ))}</tbody>
       </table>
       {r.margin && <div className="small">EBITDA margin <b>{r.margin.now.toFixed(1)}%</b> <span className={tone(r.margin.qoq_pp)}>{r.margin.qoq_pp != null ? `${r.margin.qoq_pp > 0 ? "+" : ""}${r.margin.qoq_pp}pp QoQ` : ""}</span> · <span className={tone(r.margin.yoy_pp)}>{r.margin.yoy_pp != null ? `${r.margin.yoy_pp > 0 ? "+" : ""}${r.margin.yoy_pp}pp YoY` : ""}</span></div>}

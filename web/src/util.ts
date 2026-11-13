@@ -4,8 +4,9 @@ export const inr = (n: number | null | undefined, dp = 0) =>
 export const crore = (n: number | null | undefined) => {
   if (n == null) return "—";
   const a = Math.abs(n);
-  if (a >= 100000) return `₹${(n / 100000).toFixed(a >= 1000000 ? 1 : 2)}L Cr`;
-  return `₹${inr(n)} Cr`;
+  const sign = n < 0 ? "−" : "";
+  if (a >= 100000) return `${sign}₹${(a / 100000).toFixed(a >= 1000000 ? 1 : 2)}L Cr`;
+  return `${sign}₹${inr(a)} Cr`;
 };
 
 export const pct = (n: number | null | undefined, dp = 0, sign = true) =>
@@ -63,3 +64,15 @@ export function store<T>(key: string, fallback: T): T {
 export function save(key: string, v: unknown) {
   try { localStorage.setItem("finn:" + key, JSON.stringify(v)); } catch { /* private mode / sandbox */ }
 }
+
+/** Change in a quarterly figure. A swing between profit and loss has no meaningful %, so say what happened. */
+type Chg = { value: number | null; prev: number | null; yago: number | null; qoq: number | null; yoy: number | null };
+const flip = (m: Chg, k: "qoq" | "yoy") => {
+  const base = k === "qoq" ? m.prev : m.yago;
+  return m.value != null && base != null && m.value * base < 0 ? (m.value < 0 ? "to loss" : "to profit") : null;
+};
+export const chg = (m: Chg, k: "qoq" | "yoy") => flip(m, k) ?? pct(m[k]);
+export const chgTone = (m: Chg, k: "qoq" | "yoy") => { const f = flip(m, k); return f ? (f === "to loss" ? "down" : "up") : tone(m[k]); };
+
+/** Model placeholders like "N/A" or "—" are not content. */
+export const hasText = (s?: string | null) => !!s && !/^\s*(—|-|n\/?a|none|null|not available)\.?\s*$/i.test(s);

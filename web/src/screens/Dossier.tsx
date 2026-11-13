@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { loadDossier, useSnap, apiBase } from "../data";
 import type { Analysis, Dossier as D, Note } from "../types";
-import { cls, crore, fq, pct, tone } from "../util";
+import { cls, crore, fq, pct, tone, chg, chgTone, hasText } from "../util";
 import { Bars, Verdict, Empty } from "../ui/kit";
 import { AreaChart, Num } from "../ui/charts";
 import { CallLine, StoryCard } from "./Brief";
@@ -98,7 +98,7 @@ export function Dossier({ sym, onBack }: { sym: string; onBack: () => void }) {
               <div className="row between"><span className="small dim">{p.said_in} · {p.metric}</span><Verdict v={p.verdict} /></div>
               <div className="p-promise">“{p.promise}”</div>
               <div className="p-outcome">{p.outcome}</div>
-              {p.evidence && p.evidence !== "—" && <div className="tiny dim">{p.evidence}</div>}
+              {hasText(p.evidence) && <div className="tiny dim">{p.evidence}</div>}
               <Checks quote={p.quote_check} evidence={p.evidence_check} note={p.verdict_note} />
             </li>))}</ul>
           <h3 className="sub">Narrative vs numbers</h3>
@@ -249,6 +249,6 @@ function QuarterTable({ d }: { d: D }) {
   return <div className="results">
     <div className="results-title">{fq(q.period)} <span className="dim">· {q.headline}</span></div>
     <table className="rt"><thead><tr><th /><th>{q.period.replace(" 20", " '")}</th><th>QoQ</th><th>YoY</th></tr></thead>
-      <tbody>{q.metrics.map((m) => <tr key={m.label}><td>{m.label}</td><td className="num">{crore(m.value)}</td><td className={cls("num", tone(m.qoq))}>{pct(m.qoq)}</td><td className={cls("num", tone(m.yoy))}>{pct(m.yoy)}</td></tr>)}</tbody></table>
+      <tbody>{q.metrics.map((m) => <tr key={m.label}><td>{m.label}</td><td className="num">{crore(m.value)}</td><td className={cls("num", chgTone(m, "qoq"))}>{chg(m, "qoq")}</td><td className={cls("num", chgTone(m, "yoy"))}>{chg(m, "yoy")}</td></tr>)}</tbody></table>
   </div>;
 }

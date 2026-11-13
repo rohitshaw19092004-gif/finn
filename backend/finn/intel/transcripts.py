@@ -261,7 +261,9 @@ def promise_vs_delivered(company: str, guidance: list[dict], quarters: dict,
     res = llm.run("reason", task=task or f"promises {company}", system=(
         "You are a sceptical buy-side analyst. Compare what management promised with what was delivered. "
         "Ground every verdict in the reported quarterly numbers provided (INR crore) or in later guidance, and put "
-        "the exact figures you used in 'evidence'. Mark 'pending' if the horizon has not ended; 'moved goalposts' "
+        "the exact figures you used in 'evidence' (leave it empty if no figure applies). Each column of the table is "
+        "ONE quarter (e.g. 'Mar 2026' = the quarter ending March 2026), never a full year — call it 'the Mar 2026 "
+        "quarter'. Mark 'pending' if the horizon has not ended; 'moved goalposts' "
         "if later calls quietly changed the target; 'unknown' if the numbers given cannot settle it. Set 'ref' to "
         "the guidance line number. Quote only from the guidance lines given. No outside knowledge of the company."),
         prompt=f"Company: {company}\n\nReported quarterly numbers:\n{qtable}\n\nGuidance given over the last year "
@@ -328,6 +330,8 @@ def validate_promises(out: dict, guidance: list[dict], quarters: dict) -> dict:
         if p.get("verdict") not in VERDICTS:
             p["verdict"] = "unknown"
         ev = (p.get("evidence") or "").strip()
+        if re.fullmatch(r"(?i)(n/?a|none|null|-|—|not available)\.?", ev):
+            ev = p["evidence"] = ""                     # placeholder, not evidence
         if p["verdict"] not in ("pending", "unknown") and not ev:
             p["verdict_note"] = f"model said '{p['verdict']}' without citing figures"
             p["verdict"] = "unknown"
